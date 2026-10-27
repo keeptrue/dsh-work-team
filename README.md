@@ -207,7 +207,7 @@ npm test          # node --test test/  —— 191 项，全绿
 npm run measure   # 量一次会话请求体积：system 字符数、tools 字节数、注入次数
 ```
 
-测试分五层：`roles.test.js` 与 `toolset.test.js` 测纯函数和工具白名单；`host.test.js` 测宿主接线（自动组建 / `@` 转发 / 工具收口 / 临时工上限 / 满编降级）；`model-apply.test.js` 测员工模型应用（Agent 级选择、失败重试、幂等、主对话换模型后重钉）；`client-roles.test.js`、`dock-fan.test.js`、`member-status.test.js`、`office-v5.test.js` 测客户端状态机与布局约束。
+测试覆盖：`roles.test.js` 与 `toolset.test.js` 测纯函数和工具白名单；`host.test.js` 测宿主接线（自动组建 / `@` 转发 / 工具收口 / 临时工上限 / 满编降级）；`model-apply.test.js` 测员工模型应用（Agent 级选择、失败重试、幂等、主对话换模型后重钉）；`client-roles.test.js`、`dock-fan.test.js`、`member-status.test.js`、`office-v5.test.js` 测客户端状态机与布局约束。
 
 改 `lib/roles.js` 的角色时记得同步 `client.js` 顶部的镜像 `ROLES` 表——两侧都按 id 取名字、配色和状态。
 
