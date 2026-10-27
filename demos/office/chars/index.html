@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>角色美术 · 三个方向 · 员工办公室</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231E1A16'/%3E%3Ccircle cx='12' cy='14' r='3' fill='%23fff'/%3E%3Ccircle cx='20' cy='14' r='3' fill='%23fff'/%3E%3C/svg%3E">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.dataset.theme='dark'}catch(e){}</script>
+<style>
+:root{
+  --bg:#F7F3EC; --panel:#FFFDF8; --chip:#EDE6D9;
+  --ink:#1E1A16; --muted:#6C6357; --faint:#9A9082;
+  --line:#E6DED1; --line2:#D8CEBD;
+  --shadow:0 1px 2px rgba(70,45,20,.05),0 18px 40px -22px rgba(70,45,20,.3);
+  --a:#EF6B45; --b:#7A5AE0; --c:#12A594;
+}
+:root[data-theme="dark"]{
+  --bg:#111013; --panel:#1A181C; --chip:#272329;
+  --ink:#F3EDE3; --muted:#A79D90; --faint:#7C7365;
+  --line:#2D2931; --line2:#3A3540;
+  --shadow:0 1px 2px rgba(0,0,0,.45),0 22px 50px -24px rgba(0,0,0,.85);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]):not([data-theme="dark"]){
+    --bg:#111013; --panel:#1A181C; --chip:#272329;
+    --ink:#F3EDE3; --muted:#A79D90; --faint:#7C7365;
+    --line:#2D2931; --line2:#3A3540;
+    --shadow:0 1px 2px rgba(0,0,0,.45),0 22px 50px -24px rgba(0,0,0,.85);
+  }
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",sans-serif;
+  overflow-wrap:break-word}
+h1,h2,h3,p,ul,ol{margin:0}
+a{color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+.topbar{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;
+  background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px)}
+.topbar .in{max-width:1180px;margin:0 auto;padding:11px 22px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-size:12px;color:var(--muted);text-decoration:none}
+.brand b{color:var(--ink);font-weight:600}
+.topbar .right{margin-left:auto;font:11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--faint)}
+.hero{padding:58px 0 10px}
+.kicker{font:11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+h1{font-size:clamp(32px,5.4vw,52px);line-height:1.04;letter-spacing:-.032em;font-weight:800;margin-top:16px}
+.lede{max-width:64ch;margin-top:16px;color:var(--muted);font-size:15px}
+.lede b{color:var(--ink);font-weight:600}
+.crit{display:flex;flex-wrap:wrap;gap:7px;margin-top:22px}
+.crit span{font:11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--muted);
+  border:1px solid var(--line);background:var(--panel);padding:7px 10px;border-radius:999px;white-space:nowrap}
+.crit b{color:var(--ink);font-weight:600}
+
+section{padding:34px 0 8px}
+.sec-h{display:flex;align-items:baseline;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.sec-h .no{font:11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--faint);letter-spacing:.08em}
+.sec-h h2{font-size:19px;letter-spacing:-.015em}
+.sec-h .hint{margin-left:auto;color:var(--faint);font-size:12px;max-width:48ch}
+
+.picks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.pick{border:1px solid var(--line);border-radius:20px;background:var(--panel);overflow:hidden;
+  display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.pick .shot{display:block;aspect-ratio:12/7;overflow:hidden;background:var(--chip);border-bottom:1px solid var(--line)}
+.pick .shot img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 0;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.pick:hover .shot img{transform:scale(1.035)}
+.pick-body{padding:16px 16px 18px;display:flex;flex-direction:column;flex:1;gap:9px}
+.pick-head{display:flex;align-items:baseline;gap:8px}
+.pick-head .no{font:700 11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#fff;
+  background:var(--k);width:20px;height:20px;border-radius:6px;display:grid;place-items:center;transform:translateY(1px)}
+.pick-head h3{font-size:17px;letter-spacing:-.01em}
+.pick-head .tag{margin-left:auto;font-size:10px;color:var(--faint);border:1px solid var(--line);padding:2px 7px;border-radius:999px;white-space:nowrap}
+.one{font-size:12.5px;color:var(--ink);font-weight:600;line-height:1.5}
+.one span{color:var(--muted);font-weight:400}
+.pick ul{margin:0;padding-left:15px;font-size:11.5px;color:var(--muted)}
+.pick li{margin:3px 0}
+.pick li b{color:var(--ink);font-weight:600}
+.open{margin-top:auto;display:inline-flex;align-items:center;gap:6px;align-self:flex-start;
+  font-size:12.5px;font-weight:600;text-decoration:none;border-bottom:1.5px solid var(--k);padding-bottom:2px;color:var(--ink)}
+.open:hover{color:var(--k)}
+.pick .swatch{display:flex;gap:4px;margin-top:2px}
+.pick .swatch i{width:14px;height:14px;border-radius:4px;display:block;border:1px solid rgba(0,0,0,.08)}
+
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+td:first-child{color:var(--muted);white-space:nowrap}
+td b{font-weight:600}
+.tbl-wrap{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--panel)}
+
+.notes{margin-top:40px;padding:30px 0 64px;border-top:1px solid var(--line)}
+.note-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:26px}
+.note-grid h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:8px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:600}
+.note-grid p,.note-grid li{font-size:12.5px;color:var(--muted)}
+.note-grid ul{margin:0;padding-left:15px}
+.note-grid li{margin:4px 0}
+.note-grid code{font:11.5px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  background:var(--chip);padding:2px 5px;border-radius:5px;color:var(--ink)}
+@media (max-width:980px){.picks{grid-template-columns:1fr}.hero{padding-top:40px}}
+@media (max-width:560px){
+  .wrap{padding:0 14px}.topbar .in{padding:10px 14px}
+  .pick-body{padding:13px}
+  .sec-h .hint{margin-left:0;width:100%}
+  table{font-size:11px}th,td{padding:7px 8px}
+}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="in">
+  <a class="brand" href="./index.html"><b>员工办公室</b> · 角色美术</a>
+  <span class="right">2026-10-26 · 3 个方向 · 每个方向 1 个自包含 demo</span>
+</div></header>
+
+<main>
+  <section class="hero wrap">
+    <p class="kicker">Office characters · round 2</p>
+    <h1>三个方向，挑一个。</h1>
+    <p class="lede">老板否掉的是「32px 下的一坨黑」。这一轮不动布局、不动状态机，只重画角色：<b>8 个人 / 7 种状态 / 一条 300px 侧栏 / 一个会交接的微场景</b>。三份 demo 都能切浅色深色、300/380 宽、暂停和 0.5–2× 速度。</p>
+    <div class="crit">
+      <span>验收尺寸 <b>32px</b></span><span>眼睛实心 <b>≥2.5px</b></span><span>对比 <b>≥4.5:1</b></span>
+      <span>头身 <b>1:1.5±0.2</b></span><span>描边 <b>1px@32</b></span><span>剪影两两可辨</span>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="sec-h"><span class="no">01</span><h2>三个方向</h2>
+      <span class="hint">先看缩略图，再点进去看 32px 真尺寸那一条</span></div>
+    <div class="picks">
+      <article class="pick" style="--k:var(--a)">
+        <a class="shot" href="./d1.html"><img src="./preview-d1.png" alt="方向 A 圆角小人：八个 128px 角色卡片"></a>
+        <div class="pick-body">
+          <div class="pick-head"><span class="no">A</span><h3>圆角小人</h3><span class="tag">人 · 软渐变</span></div>
+          <p class="one">把「人」放在第一眼：大头、亮脸、实心眼，靠发型/头饰/道具认人。<span>最像 Marvis，也最稳。</span></p>
+          <ul>
+            <li><b>32px</b> 眼睛 2.9×3.4px 纯色，脸永远是全身最亮的地方</li>
+            <li><b>剪影</b> 呆毛 / 耳机 / 头巾 / 蘑菇头 / 双丸子 / 贝雷 / 帽檐 / 丸子</li>
+            <li><b>体形</b> 老后胖一档、老运壮一档；小研矮一档、小审矮半档</li>
+          </ul>
+          <div class="swatch"><i style="background:#EF6B45"></i><i style="background:#3E86F5"></i><i style="background:#7A5AE0"></i><i style="background:#12A594"></i><i style="background:#E0A22A"></i><i style="background:#E85D9E"></i><i style="background:#2E9E6B"></i><i style="background:#B4552F"></i></div>
+          <a class="open" href="./d1.html">打开 d1.html →</a>
+        </div>
+      </article>
+
+      <article class="pick" style="--k:var(--b)">
+        <a class="shot" href="./d2.html"><img src="./preview-d2.png" alt="方向 B 团子兽：八个 128px 动物团子卡片"></a>
+        <div class="pick-body">
+          <div class="pick-head"><span class="no">B</span><h3>团子兽</h3><span class="tag">兽 · 粗描边</span></div>
+          <p class="one">重画，不是修。扁平色块 + 统一墨线，耳朵和尾巴负责剪影，表情夸张一档。<span>最有性格。</span></p>
+          <ul>
+            <li><b>32px</b> 眼 3.4px（比 A 大 20%），墨线 1px 把色块钉住</li>
+            <li><b>8 物种</b> 猫 / 兔 / 熊 / 狗 / 狐 / 羊 / 浣熊 / 鸟，没有一只靠颜色区分</li>
+            <li><b>风险</b> 幼态、贴纸感；128px 精致度不如 A</li>
+          </ul>
+          <div class="swatch"><i style="background:#FFB870"></i><i style="background:#A8D8FF"></i><i style="background:#C3AEFF"></i><i style="background:#7FDCC8"></i><i style="background:#FFC94D"></i><i style="background:#FFA8C8"></i><i style="background:#8FD3A8"></i><i style="background:#F0C39B"></i></div>
+          <a class="open" href="./d2.html">打开 d2.html →</a>
+        </div>
+      </article>
+
+      <article class="pick" style="--k:var(--c)">
+        <a class="shot" href="./d3.html"><img src="./preview-d3.png" alt="方向 C 像素小人：像素角色网格"></a>
+        <div class="pick-body">
+          <div class="pick-head"><span class="no">C</span><h3>像素小人</h3><span class="tag">像素 · 网格</span></div>
+          <p class="one">1× 就是最终稿，32px 天生对齐；4× 只用于展示和文档。<span>最省实现，也最「工具」。</span></p>
+          <ul>
+            <li><b>32px</b> 2×2 实心深色眼睛、1px 深色描边，没有抗锯齿灰边</li>
+            <li><b>简化稿</b> 头发收成一块实色，道具只留一个像素特征</li>
+            <li><b>风险</b> 128px 放大后细节少；气质偏复古，不一定配现在的 UI</li>
+          </ul>
+          <div class="swatch"><i style="background:#241c18"></i><i style="background:#f6cba4"></i><i style="background:#e0a35e"></i><i style="background:#2d7ff9"></i><i style="background:#3f9e6a"></i><i style="background:#e04b4b"></i><i style="background:#8a5cd6"></i><i style="background:#f2c94c"></i></div>
+          <a class="open" href="./d3.html">打开 d3.html →</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="sec-h"><span class="no">02</span><h2>取舍</h2>
+      <span class="hint">同一套角色数据、同一套七态；差别只在画法和实现代价</span></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th></th><th>A 圆角小人</th><th>B 团子兽</th><th>C 像素小人</th></tr></thead>
+        <tbody>
+          <tr><td>32px 识别</td><td><b>强</b> · 亮脸 + 头饰</td><td><b>强</b> · 物种剪影</td><td><b>最强</b> · 像素对齐</td></tr>
+          <tr><td>128px 精致</td><td><b>最强</b> · 渐变 + 体积光</td><td>中 · 贴纸感</td><td>弱 · 像素放大</td></tr>
+          <tr><td>暗色主题</td><td>稳 · 角色自带亮色</td><td>稳 · 亮毛色更跳</td><td>稳 · 调色板固定</td></tr>
+          <tr><td>体形差</td><td>胖/矮各两档</td><td>胖/矮各两档</td><td>靠像素高度</td></tr>
+          <tr><td>实现代价</td><td>中 · 一套 SVG 几何 + 参数</td><td>中 · 8 物种部件</td><td>低 · 1× 稿即终稿</td></tr>
+          <tr><td>主要风险</td><td>8 人容易像一家人</td><td>幼态、不够职业</td><td>气质偏复古</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="sec-h"><span class="no">03</span><h2>怎么验</h2>
+      <span class="hint">三份 demo 的顶栏控件一致：主题 / 宽度 / 暂停 / 速度 / 重播交接</span></div>
+    <div class="note-grid">
+      <div><h3>32px 真尺寸</h3><p>每页 02 区是一条 300px 侧栏，里面就是 32px 的最终渲染。把浏览器缩到 100%，退后一臂看这一条。</p></div>
+      <div><h3>七种状态</h3><p>每页 03 区：待命 / 干活中 / 等你回复 / 有新结果 / 异常结束 / 入职失败 / 入职中。状态靠姿态 + 眼型 + 嘴型，颜色只是最后一道保险。</p></div>
+      <div><h3>微场景</h3><p>每页 04 区：3 个工位、显示器光、私人物品、地毯；阿策起身 → 前倾递文件 → 小研接住下沉 → 点头 → 回座，18 秒一循环。</p></div>
+      <div><h3>截图 / 自检</h3><p><code>node shot.mjs d1</code> 会输出 300/380 × 明暗截图、32px 八倍放大、纯黑剪影、溢出与控制台报告，落在 <code>shots/</code>。</p></div>
+    </div>
+  </section>
+
+  <footer class="notes"><div class="wrap"><div class="note-grid">
+    <div><h3>这一轮只做角色</h3><p>布局、状态机、七态语义、走廊结构一律没动；三个方向都只改「怎么画」。正式代码（client.js / lib / locale / docs / test）零改动。</p></div>
+    <div><h3>文件</h3><p><code>d1.html</code> / <code>d2.html</code> / <code>d3.html</code> 单文件自包含，无外链、无 import、动画只用 CSS keyframes，<code>prefers-reduced-motion</code> 时静止。</p></div>
+    <div><h3>分工</h3><p>A / B 与选择页：小设。C 像素小人：小前。三份 demo 共用同一组角色名、身份色与七态文案，方便横向比。</p></div>
+  </div></div></footer>
+</main>
+</body>
+</html>

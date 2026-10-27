@@ -1,0 +1,11 @@
+node_modules/
+.DS_Store
+*.log
+
+# Local dev snapshots kept outside version control
+.baseline/
+
+# Design exploration renders — regenerable from demos/office/check.mjs
+demos/**/shots/
+demos/**/preview-*.png
+docs/evidence/

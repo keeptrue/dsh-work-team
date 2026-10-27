@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  员工办公室 · 吉祥物几何 spec (v1)  —  designer / 2026-10-26
+
+  WHAT THIS FILE IS
+  A geometry sheet, not a runtime asset. The visible drawing is a contact sheet;
+  the parts the frontend consumes live in <defs> and are addressed by id:
+      #p-body            shoulders + back (ink silhouette)
+      #p-headcat         head + triangle ears
+      #p-headdog         head + droop ears
+      #p-headfox         head + tall ears
+      #p-tailcat         thin curled tail   (species channel, visible at 28px)
+      #p-taildog         short thick tail
+      #p-tailfox         bushy tail
+      #p-collar          accent band across the nape  ← role identity
+      #p-tag-round|square|shield|triangle|diamond|ring|bookmark|hex
+      #p-hands-type      two nubs on the desk edge (working, >=40px only)
+      #state-idle|working|waiting|handoff   four complete 64x64 assemblies
+
+  COMPOSITION RULE
+  A mascot is always:  tail → body → (arm) → head → (hand/paper) → collar → tag.
+  Species is a three-way swap of { #p-head*, #p-tail*, #p-tag-* }. Pose is one
+  transform triple on { body, head, tail }. The state groups below are worked
+  examples for the cat; for dog/fox swap the three <use> hrefs and keep the
+  transforms verbatim.
+
+  COORDINATES
+  viewBox 0 0 64 64 — identical to the current RoleAvatar (client.js:970), so a
+  mascot drops into the existing 28/40px slot with no rescale. Head circle is
+  c(32,31) r15; shoulders span x12.5..51.5 from y48.5 down; collar arc runs
+  y43.2..47.5; tag hangs y49..59. Everything is inside 64x64 with >=2px margin.
+
+  COLOUR
+  Geometry uses ONLY custom properties. The literals in this file appear in two
+  places and nowhere else:
+    1. the ink family  wt-ink / wt-ink-2 / wt-paper  (the mascot must read the
+       same in light and dark, so these cannot be theme aliases)
+    2. the sheet chrome  sheet-label / sheet-guide  (labels and guides of THIS
+       drawing; never copied into product code)
+  (Custom properties are written without their leading double dash inside this
+  comment block, because XML forbids a double dash in a comment.)
+  The collar NEVER changes colour with state: collar = who, ring + monitor glow
+  = how they are doing. Two colour systems, zero collisions.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 428 348" width="428" height="348"
+     font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+
+  <title>员工办公室吉祥物 · 几何与状态</title>
+
+  <defs>
+    <style>
+      /* ── ink family: the only allowed literals ─────────────────────────── */
+      .m, .m * { --wt-ink:#171b22; --wt-ink-2:#333d4b; --wt-paper:#f2f4f7; }
+      /* ── sheet chrome: drawing aids only ───────────────────────────────── */
+      svg { --sheet-label:#8a929e; --sheet-guide:#c9cfd8; --sheet-bg:#ffffff;
+        --dsw-alias-label-primary:#1c2026; }
+
+      /* ── role palettes: copied verbatim from lib/roles.js ──────────────── */
+      .r-pm        { --wt-accent:#f59e0b; --wt-soft:#fff2cc; }
+      .r-frontend  { --wt-accent:#2d7ff9; --wt-soft:#dcebff; }
+      .r-backend   { --wt-accent:#21a67a; --wt-soft:#d9f7ea; }
+      .r-reviewer  { --wt-accent:#e04b4b; --wt-soft:#ffe1e1; }
+      .r-researcher{ --wt-accent:#7c5cff; --wt-soft:#e9e2ff; }
+      .r-designer  { --wt-accent:#d94f9c; --wt-soft:#ffe3f2; }
+      .r-ops       { --wt-accent:#e07a2f; --wt-soft:#ffead9; }
+      .r-writer    { --wt-accent:#b4534b; --wt-soft:#ffe6e1; }
+
+      .lbl { font-size:8px; fill:var(--sheet-label); letter-spacing:.02em; }
+      .h1  { font-size:11px; font-weight:700; fill:var(--sheet-label); }
+      .h2  { font-size:8.5px; fill:var(--sheet-label); }
+      .guide { fill:none; stroke:var(--sheet-guide); stroke-width:.75; stroke-dasharray:2 2; }
+    </style>
+
+    <!-- ══ parts ══════════════════════════════════════════════════════════ -->
+
+    <!-- Shoulders seen from behind: a rounded trapezoid, top edge at y48.5. -->
+    <path id="p-body-shape" d="M11.5 64Q11.5 46 32 46Q52.5 46 52.5 64Z"/>
+    <g id="p-body">
+      <use href="#p-body-shape" fill="var(--wt-ink)"/>
+    </g>
+
+    <!-- Head from behind: plain disc + two ears. The inner notch is the only
+         detail that survives 28px — it is what turns a blob into an ear. -->
+    <g id="p-headcat">
+      <circle cx="32" cy="31" r="15" fill="var(--wt-ink)"/>
+      <path d="M19.5 21.5 23.2 7.5 29.5 18.8Z" fill="var(--wt-ink)"/>
+      <path d="M22.6 18.4 23.6 12.6 26.3 17.4Z" fill="var(--wt-ink-2)"/>
+      <path d="M44.5 21.5 40.8 7.5 34.5 18.8Z" fill="var(--wt-ink)"/>
+      <path d="M41.4 18.4 40.4 12.6 37.7 17.4Z" fill="var(--wt-ink-2)"/>
+    </g>
+
+    <g id="p-headdog">
+      <circle cx="32" cy="31" r="15" fill="var(--wt-ink)"/>
+      <path d="M21.4 19.8c-6.4 1.4-10.6 6.6-10.4 12.6.1 3.9 2.3 6.6 5 7.6-1.5-2.2-1.8-5.2-1.2-8 .7-3.4 2.7-6.2 5.6-8z"
+            fill="var(--wt-ink)"/>
+      <path d="M20.6 22.4c-3.4 1.6-5.6 5-5.8 8.8" fill="none" stroke="var(--wt-ink-2)"
+            stroke-width="1.1" opacity=".8" stroke-linecap="round"/>
+      <g transform="translate(64 0) scale(-1 1)">
+        <path d="M21.4 19.8c-6.4 1.4-10.6 6.6-10.4 12.6.1 3.9 2.3 6.6 5 7.6-1.5-2.2-1.8-5.2-1.2-8 .7-3.4 2.7-6.2 5.6-8z"
+              fill="var(--wt-ink)"/>
+        <path d="M20.6 22.4c-3.4 1.6-5.6 5-5.8 8.8" fill="none" stroke="var(--wt-ink-2)"
+              stroke-width="1.1" opacity=".8" stroke-linecap="round"/>
+      </g>
+    </g>
+
+    <g id="p-headfox">
+      <circle cx="32" cy="31" r="15" fill="var(--wt-ink)"/>
+      <path d="M21.5 22 23.4 3.6 28.6 18.2Z" fill="var(--wt-ink)"/>
+      <path d="M23.5 18.6 24.1 8.6 26.4 17.2Z" fill="var(--wt-ink-2)"/>
+      <path d="M42.5 22 40.6 3.6 35.4 18.2Z" fill="var(--wt-ink)"/>
+      <path d="M40.5 18.6 39.9 8.6 37.6 17.2Z" fill="var(--wt-ink-2)"/>
+    </g>
+
+    <!-- Tails: the species channel that still reads at 28px, because a 1.4px
+         line, a 2.4px stub and a 4.2px bush are three different weights. -->
+    <g id="p-tailcat">
+      <path d="M50 58.5q7.4.6 6.6-7.4" fill="none" stroke="var(--wt-ink)"
+            stroke-width="3.2" stroke-linecap="round"/>
+    </g>
+    <g id="p-taildog">
+      <path d="M50 57.2q5.2.2 4.6-4.2" fill="none" stroke="var(--wt-ink)"
+            stroke-width="5.4" stroke-linecap="round"/>
+    </g>
+    <g id="p-tailfox">
+      <path d="M48.5 60c5.4 1.6 10.4-1 11.4-5.4 1-4.4-2.2-7.8-5.4-7.2 1.8 2 1.6 4.6-.6 6-2.2 1.4-4.4 3-5.4 6.6z"
+            fill="var(--wt-ink)"/>
+    </g>
+
+    <!-- Collar: seen from behind it is one band across the nape. 4.4 stroke =
+         1.9px at 28px, the thinnest band that still carries hue. -->
+    <!-- Clip target for the collar: the band is drawn wider than the neck and
+         cut by the shoulder outline, so its ends can never float in mid-air. -->
+    <clipPath id="cp-body"><use href="#p-body-shape"/></clipPath>
+
+    <g id="p-collar" clip-path="url(#cp-body)">
+      <path d="M6 47.4q26 3.4 52 0V53.2H6z" fill="var(--wt-accent)"/>
+      <path d="M6 47.4q26 3.4 52 0v1.2q-26 3.4-52 0z" fill="var(--wt-ink)" opacity=".3"/>
+    </g>
+
+    <!-- Tags: 40px+ identity detail. At 28px they merge with the collar into a
+         single accent mark, which is the intended read. -->
+    <g id="p-tag-round" transform="translate(0 1.6)">   <circle cx="32" cy="53.6" r="4" fill="var(--wt-accent)"/></g>
+    <g id="p-tag-square" transform="translate(0 1.6)">  <rect x="27.8" y="49.6" width="8.4" height="8.4" rx="2" fill="var(--wt-accent)"/></g>
+    <g id="p-tag-shield" transform="translate(0 1.6)">  <path d="M27.4 49.4h9.2v4.4c0 2.6-4.6 5.2-4.6 5.2s-4.6-2.6-4.6-5.2z" fill="var(--wt-accent)"/></g>
+    <g id="p-tag-triangle" transform="translate(0 1.6)"><path d="M32 48.8 37.2 58H26.8z" fill="var(--wt-accent)"/></g>
+    <g id="p-tag-diamond" transform="translate(0 1.6)"> <path d="M32 48.6 37.6 53.6 32 58.6 26.4 53.6z" fill="var(--wt-accent)"/></g>
+    <g id="p-tag-ring" transform="translate(0 1.6)">    <circle cx="32" cy="53.6" r="3.6" fill="none" stroke="var(--wt-accent)" stroke-width="2.4"/></g>
+    <g id="p-tag-bookmark" transform="translate(0 1.6)"><path d="M28.8 49h6.4v9.6l-3.2-2.6-3.2 2.6z" fill="var(--wt-accent)"/></g>
+    <g id="p-tag-hex" transform="translate(0 1.6)">     <path d="M32 48.4 36.4 51v5.2L32 58.8 27.6 56.2V51z" fill="var(--wt-accent)"/></g>
+
+    <!-- Hands on the desk edge (working). ink-2 so they separate from the body. -->
+    <g id="p-hands-type">
+      <rect x="20" y="57.4" width="6.5" height="3.4" rx="1.7" fill="var(--wt-ink-2)"/>
+      <rect x="37.5" y="57.4" width="6.5" height="3.4" rx="1.7" fill="var(--wt-ink-2)"/>
+    </g>
+
+    <!-- Rim: a hairline in label-primary at 20%. Invisible in light theme
+         (label-primary is near-black there), and the only thing keeping the
+         shoulders legible on a dark floor. Include it last, on top. -->
+    <g id="p-rim" fill="none" stroke="color-mix(in srgb, var(--dsw-alias-label-primary) 20%, transparent)"
+       stroke-width=".9">
+      <circle cx="32" cy="31" r="15"/>
+      <use href="#p-body-shape"/>
+    </g>
+
+    <!-- Dashed silhouette: used by failed / provisioning, the two states where
+         the person is not really in the room yet (or never arrived). -->
+    <g id="p-ghost" fill="none" stroke="var(--wt-ink)" stroke-width=".9" stroke-dasharray="2.2 2">
+      <circle cx="32" cy="31" r="15"/>
+      <use href="#p-body-shape"/>
+    </g>
+
+    <!-- ══ seven states (worked examples, cat) ═══════════════════════════ -->
+
+    <!-- idle: upright, head level, tail resting. The reference pose. -->
+    <g id="state-idle">
+      <use href="#p-tailcat"/>
+      <use href="#p-body"/>
+      <use href="#p-headcat"/>
+      <use href="#p-collar"/>
+      <use href="#p-tag-round"/>
+      <use href="#p-rim"/>
+    </g>
+
+    <!-- working: shoulders +2 up, head 1.6 down, hands on the desk edge.
+         Read order at 28px: hunched silhouette -> monitor glow (desk layer). -->
+    <g id="state-working">
+      <use href="#p-tailcat" transform="rotate(6 50 58)"/>
+      <use href="#p-body" transform="translate(0 -1.8)"/>
+      <use href="#p-headcat" transform="translate(0 1.6)"/>
+      <use href="#p-collar" transform="translate(0 -.4)"/>
+      <use href="#p-tag-round" transform="translate(0 -.4)"/>
+      <use href="#p-hands-type"/>
+      <use href="#p-rim"/>
+    </g>
+
+    <!-- waiting: torso -7deg, head -15deg, one eye + a snout bump on the left
+         silhouette. This is the only state that shows an eye — the cheapest
+         possible "he turned around" signal. -->
+    <g id="state-waiting">
+      <use href="#p-tailcat" transform="rotate(-10 50 58)"/>
+      <g transform="rotate(-7 32 52)"><use href="#p-body"/></g>
+      <g transform="rotate(-15 32 38)"><use href="#p-headcat"/></g>
+      <path d="M17.4 32.2q-2.8.4-2.6 3.4" fill="none" stroke="var(--wt-ink)"
+            stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="20.8" cy="29" rx="2.1" ry="2.3" fill="var(--wt-paper)"/>
+      <circle cx="21.2" cy="29.2" r=".95" fill="var(--wt-ink)"/>
+      <use href="#p-collar"/>
+      <use href="#p-tag-round"/>
+      <use href="#p-rim"/>
+    </g>
+
+    <!-- handoff: torso -6deg, tail up, right arm raised holding a sheet.
+         Paper 14.5x11 = 6.3x4.8px at 28px: a light blob beside the head, which
+         is exactly the read we want from across the panel. -->
+    <g id="state-handoff">
+      <use href="#p-tailcat" transform="rotate(16 50 58)"/>
+      <g transform="rotate(-6 32 60)"><use href="#p-body"/></g>
+      <path d="M49 56.5 57 45" fill="none" stroke="var(--wt-ink)"
+            stroke-width="5.2" stroke-linecap="round"/>
+      <g transform="rotate(-9 32 38)"><use href="#p-headcat"/></g>
+      <circle cx="58" cy="43.4" r="3.1" fill="var(--wt-ink)"/>
+      <g transform="rotate(-16 59 35)">
+        <rect x="52" y="29.5" width="14.5" height="11" rx="1.4" fill="var(--wt-paper)"/>
+        <path d="M54.6 33.2h9M54.6 36.2h6.4" stroke="var(--wt-ink-2)"
+              stroke-width=".9" opacity=".5" stroke-linecap="round"/>
+      </g>
+      <g class="handoff-motion" fill="none" stroke="var(--wt-accent)"
+         stroke-width="1.6" stroke-linecap="round" opacity=".6">
+        <path d="M44.5 26.5q3.6-3.2 7.8-3.6"/>
+        <path d="M43.6 33.4q3.8-1.4 6.8-.6"/>
+      </g>
+      <use href="#p-collar"/>
+      <use href="#p-tag-round"/>
+      <use href="#p-rim"/>
+    </g>
+
+    <!-- done: he stood up (body and head lifted 3.5) and the tail came up. -->
+    <g id="state-done">
+      <use href="#p-tailcat" transform="rotate(20 50 58)"/>
+      <use href="#p-body" transform="translate(0 -3.5)"/>
+      <g transform="rotate(-3 32 34)"><use href="#p-headcat" transform="translate(0 -3.5)"/></g>
+      <use href="#p-collar" transform="translate(0 -3.5)"/>
+      <use href="#p-tag-round" transform="translate(0 -3.5)"/>
+      <use href="#p-rim" transform="translate(0 -3.5)"/>
+    </g>
+
+    <!-- error: slumped — head 2 down, shoulders 1.5 down, tail dropped. -->
+    <g id="state-error">
+      <use href="#p-tailcat" transform="rotate(-16 50 58)"/>
+      <use href="#p-body" transform="translate(0 1.5)"/>
+      <use href="#p-headcat" transform="translate(0 2)"/>
+      <use href="#p-collar" transform="translate(0 1.5)"/>
+      <use href="#p-tag-round" transform="translate(0 1.5)"/>
+      <use href="#p-rim" transform="translate(0 1.5)"/>
+    </g>
+
+    <!-- failed: the hire never became a person. Same silhouette, collar gone
+         grey (identity never established), body a dashed outline at 42%. -->
+    <g id="state-failed">
+      <g opacity=".38"><use href="#p-body"/></g>
+      <g fill="none" stroke="var(--wt-ink)" stroke-width="1.3" opacity=".62">
+        <circle cx="32" cy="31" r="15"/>
+        <path d="M19.5 21.5 23.2 7.5 29.5 18.8ZM44.5 21.5 40.8 7.5 34.5 18.8Z"/>
+      </g>
+    </g>
+
+    <!-- provisioning: the shape is there, the content is not. Dashed outline,
+         collar at 45%, no tail; the ring around it spins in CSS. -->
+    <g id="state-provisioning">
+      <g opacity=".3">
+        <use href="#p-headcat"/>
+        <use href="#p-body"/>
+      </g>
+      <use href="#p-ghost"/>
+      <g opacity=".55">
+        <use href="#p-collar"/>
+        <use href="#p-tag-round"/>
+      </g>
+    </g>
+  </defs>
+
+  <!-- ══ contact sheet ═════════════════════════════════════════════════════ -->
+
+  <text class="h1" x="8" y="13">mascot.svg v2 · 64×64 · back-of-head · collar = identity · 7 states</text>
+  <text class="h2" x="8" y="24">每态至少两个通道不同：姿态 + 项圈 + 轮廓虚实 + 尾巴。颜色从来不是唯一通道。</text>
+
+  <!-- seven states at native 64 -->
+  <g class="m">
+    <use href="#state-idle"         transform="translate(8 32)"/>
+    <use href="#state-working"      transform="translate(112 32)"/>
+    <use href="#state-waiting"      transform="translate(216 32)"/>
+    <use href="#state-handoff"      transform="translate(320 32)"/>
+    <use href="#state-done"         transform="translate(8 116)"/>
+    <use href="#state-error"        transform="translate(112 116)"/>
+    <use href="#state-failed"       transform="translate(216 116)"/>
+    <use href="#state-provisioning" transform="translate(320 116)"/>
+  </g>
+  <g class="lbl" text-anchor="middle">
+    <text x="40"  y="106">idle 待命</text>
+    <text x="144" y="106">working 干活</text>
+    <text x="248" y="106">waiting 等你</text>
+    <text x="352" y="106">handoff 交接</text>
+    <text x="40"  y="190">done 有新结果</text>
+    <text x="144" y="190">error 异常结束</text>
+    <text x="248" y="190">failed 入职失败</text>
+    <text x="352" y="190">provisioning 入职中</text>
+  </g>
+  <path class="guide" d="M8 198h404"/>
+  <path class="guide" d="M8 272h404"/>
+
+  <!-- eight roles at 40: the row/48px context -->
+  <text class="lbl" x="8" y="124">8 roles @40 — collar hue × ear class × tail weight</text>
+  <!-- Assembled inline, one <g> per role, so each role swaps its own species
+       parts; the runtime does the same with a 3-way href swap. -->
+  <g class="m r-pm">
+    <use href="#p-tailcat" transform="translate(8 214) scale(.625)"/>
+    <use href="#p-body"    transform="translate(8 214) scale(.625)"/>
+    <use href="#p-headcat" transform="translate(8 214) scale(.625)"/>
+    <use href="#p-collar"  transform="translate(8 214) scale(.625)"/>
+    <use href="#p-tag-round" transform="translate(8 214) scale(.625)"/>
+  </g>
+  <g class="m r-frontend">
+    <use href="#p-tailcat" transform="translate(60 214) scale(.625)"/>
+    <use href="#p-body"    transform="translate(60 214) scale(.625)"/>
+    <use href="#p-headcat" transform="translate(60 214) scale(.625)"/>
+    <use href="#p-collar"  transform="translate(60 214) scale(.625)"/>
+    <use href="#p-tag-square" transform="translate(60 214) scale(.625)"/>
+  </g>
+  <g class="m r-backend">
+    <use href="#p-taildog" transform="translate(112 214) scale(.625)"/>
+    <use href="#p-body"    transform="translate(112 214) scale(.625)"/>
+    <use href="#p-headdog" transform="translate(112 214) scale(.625)"/>
+    <use href="#p-collar"  transform="translate(112 214) scale(.625)"/>
+    <use href="#p-tag-shield" transform="translate(112 214) scale(.625)"/>
+  </g>
+  <g class="m r-reviewer">
+    <use href="#p-taildog" transform="translate(164 214) scale(.625)"/>
+    <use href="#p-body"    transform="translate(164 214) scale(.625)"/>
+    <use href="#p-headdog" transform="translate(164 214) scale(.625)"/>
+    <use href="#p-collar"  transform="translate(164 214) scale(.625)"/>
+    <use href="#p-tag-triangle" transform="translate(164 214) scale(.625)"/>
+  </g>
+  <g class="m r-researcher">
+    <use href="#p-tailfox" transform="translate(216 214) scale(.625)"/>
+    <use href="#p-body"    transform="translate(216 214) scale(.625)"/>
+    <use href="#p-headfox" transform="translate(216 214) scale(.625)"/>
+    <use href="#p-collar"  transform="translate(216 214) scale(.625)"/>
+    <use href="#p-tag-diamond" transform="translate(216 214) scale(.625)"/>
+  </g>
+  <g class="m r-designer">
+    <use href="#p-tailcat" transform="translate(268 214) scale(.625)"/>
+    <use href="#p-body"    transform="translate(268 214) scale(.625)"/>
+    <use href="#p-headcat" transform="translate(268 214) scale(.625)"/>
+    <use href="#p-collar"  transform="translate(268 214) scale(.625)"/>
+    <use href="#p-tag-ring" transform="translate(268 214) scale(.625)"/>
+  </g>
+  <g class="m r-ops">
+    <use href="#p-taildog" transform="translate(320 214) scale(.625)"/>
+    <use href="#p-body"    transform="translate(320 214) scale(.625)"/>
+    <use href="#p-headdog" transform="translate(320 214) scale(.625)"/>
+    <use href="#p-collar"  transform="translate(320 214) scale(.625)"/>
+    <use href="#p-tag-hex" transform="translate(320 214) scale(.625)"/>
+  </g>
+  <g class="m r-writer">
+    <use href="#p-tailfox" transform="translate(372 214) scale(.625)"/>
+    <use href="#p-body"    transform="translate(372 214) scale(.625)"/>
+    <use href="#p-headfox" transform="translate(372 214) scale(.625)"/>
+    <use href="#p-collar"  transform="translate(372 214) scale(.625)"/>
+    <use href="#p-tag-bookmark" transform="translate(372 214) scale(.625)"/>
+  </g>
+  <g class="lbl" text-anchor="middle">
+    <text x="28"  y="266">pm</text>
+    <text x="80"  y="266">fe</text>
+    <text x="132" y="266">be</text>
+    <text x="184" y="266">rv</text>
+    <text x="236" y="266">rs</text>
+    <text x="288" y="266">ds</text>
+    <text x="340" y="266">op</text>
+    <text x="392" y="266">wr</text>
+  </g>
+  <path class="guide" d="M8 184h404"/>
+
+  <!-- eight roles at 28: the office-row context, true size, 1x -->
+  <text class="lbl" x="8" y="282">8 roles @28 — true size in the row; collar is a 2–2.5px band, tail weight is the species read</text>
+  <g class="m">
+    <g class="r-pm"><use href="#p-tailcat" transform="translate(14 288) scale(.4375)"/><use href="#p-body" transform="translate(14 288) scale(.4375)"/><use href="#p-headcat" transform="translate(14 288) scale(.4375)"/><use href="#p-collar" transform="translate(14 288) scale(.4375)"/><use href="#p-tag-round" transform="translate(14 288) scale(.4375)"/></g>
+    <g class="r-frontend"><use href="#p-tailcat" transform="translate(66 288) scale(.4375)"/><use href="#p-body" transform="translate(66 288) scale(.4375)"/><use href="#p-headcat" transform="translate(66 288) scale(.4375)"/><use href="#p-collar" transform="translate(66 288) scale(.4375)"/><use href="#p-tag-square" transform="translate(66 288) scale(.4375)"/></g>
+    <g class="r-backend"><use href="#p-taildog" transform="translate(118 288) scale(.4375)"/><use href="#p-body" transform="translate(118 288) scale(.4375)"/><use href="#p-headdog" transform="translate(118 288) scale(.4375)"/><use href="#p-collar" transform="translate(118 288) scale(.4375)"/><use href="#p-tag-shield" transform="translate(118 288) scale(.4375)"/></g>
+    <g class="r-reviewer"><use href="#p-taildog" transform="translate(170 288) scale(.4375)"/><use href="#p-body" transform="translate(170 288) scale(.4375)"/><use href="#p-headdog" transform="translate(170 288) scale(.4375)"/><use href="#p-collar" transform="translate(170 288) scale(.4375)"/><use href="#p-tag-triangle" transform="translate(170 288) scale(.4375)"/></g>
+    <g class="r-researcher"><use href="#p-tailfox" transform="translate(222 288) scale(.4375)"/><use href="#p-body" transform="translate(222 288) scale(.4375)"/><use href="#p-headfox" transform="translate(222 288) scale(.4375)"/><use href="#p-collar" transform="translate(222 288) scale(.4375)"/><use href="#p-tag-diamond" transform="translate(222 288) scale(.4375)"/></g>
+    <g class="r-designer"><use href="#p-tailcat" transform="translate(274 288) scale(.4375)"/><use href="#p-body" transform="translate(274 288) scale(.4375)"/><use href="#p-headcat" transform="translate(274 288) scale(.4375)"/><use href="#p-collar" transform="translate(274 288) scale(.4375)"/><use href="#p-tag-ring" transform="translate(274 288) scale(.4375)"/></g>
+    <g class="r-ops"><use href="#p-taildog" transform="translate(326 288) scale(.4375)"/><use href="#p-body" transform="translate(326 288) scale(.4375)"/><use href="#p-headdog" transform="translate(326 288) scale(.4375)"/><use href="#p-collar" transform="translate(326 288) scale(.4375)"/><use href="#p-tag-hex" transform="translate(326 288) scale(.4375)"/></g>
+    <g class="r-writer"><use href="#p-tailfox" transform="translate(378 288) scale(.4375)"/><use href="#p-body" transform="translate(378 288) scale(.4375)"/><use href="#p-headfox" transform="translate(378 288) scale(.4375)"/><use href="#p-collar" transform="translate(378 288) scale(.4375)"/><use href="#p-tag-bookmark" transform="translate(378 288) scale(.4375)"/></g>
+  </g>
+  <g class="lbl" text-anchor="middle">
+    <text x="28"  y="326">pm</text>
+    <text x="80"  y="326">fe</text>
+    <text x="132" y="326">be</text>
+    <text x="184" y="326">rv</text>
+    <text x="236" y="326">rs</text>
+    <text x="288" y="326">ds</text>
+    <text x="340" y="326">op</text>
+    <text x="392" y="326">wr</text>
+  </g>
+  <text class="h2" x="8" y="338">28px 一组里 pm/ops（琥珀 vs 橙）、rv/wr（红 vs 砖红）色相最近，靠耳朵类别 + 尾巴重量区分</text>
+</svg>

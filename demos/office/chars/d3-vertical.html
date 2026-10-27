@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>方向三 · 像素小人 — 纵向走廊（工位版）</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f2f3f6; --card:#ffffff; --fg:#111419; --fg2:#565d67; --fg3:#8a919b;
+  --line:#0000001a; --line2:#0000000f; --chip:#f0f2f5; --focus:#2d7ff9;
+
+  --room:#f7f8fa; --room-line:#0000000e;
+  --aisle-bg:#eef0f4; --aisle-dash:#d7dce4;
+  --desk-face:#e3e8ef; --desk-hi:#fbfcfe; --desk-front:#b3bdcd; --desk-edge:#818b9b;
+  --chair:#cfd7e3; --chair-line:#a8b2c1;
+  --mon-bezel:#3a414c; --mon-screen:#1d222a;
+
+  --px-ink:#241c18; --px-ol:#241c18;
+  --px-skin:#f6cba4;  --px-skin2:#d99f76;
+  --px-shoe:#332a24;
+  --px-hair-dk:#332822; --px-hair-br:#7d4a2a; --px-hair-au:#b85a30; --px-hair-bl:#d9a63c;
+  --px-hair-gy:#909aa2; --px-hair-pk:#d4608c;
+  --px-blue:#2d7ff9; --px-teal:#1fa77b; --px-amber:#f59e0b; --px-red:#e04b4b;
+  --px-violet:#7c5cf0; --px-pink:#e0559b; --px-cyan:#17a2b8; --px-brown:#a9683c;
+  --px-navy:#2b3550; --px-slate:#414a58;
+  --px-white:#ffffff; --px-metal:#b6bec7; --px-gold:#ffc94d;
+  --px-shadow:rgba(22,26,34,.18); --px-ghost:rgba(22,26,34,.26);
+  --px-st-idle:#9aa1a9; --px-st-biz:#4176e6; --px-st-warn:#f59e0b;
+  --px-st-ok:#22c55e;  --px-st-err:#ec1313;
+  --rm-leaf:#3f9e6a; --rm-leaf2:#2e7b52; --rm-pot:#c2703f;
+  --rm-water:#8fd0ea; --rm-cat:#e0a35e; --rm-cat2:#c9863f;
+  --av-bg:#f1f4f8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#0d0e10; --card:#151619; --fg:#f2f4f7; --fg2:#b9bfc7; --fg3:#7f8791;
+    --line:#ffffff26; --line2:#ffffff16; --chip:#1e2024;
+    --room:#17181c; --room-line:#ffffff10;
+    --aisle-bg:#131418; --aisle-dash:#262a31;
+    --desk-face:#333841; --desk-hi:#525a66; --desk-front:#1f2227; --desk-edge:#5a626e;
+    --chair:#2e333b; --chair-line:#4a515d;
+    --mon-bezel:#4a525e; --mon-screen:#0b0d11;
+    --px-ink:#1d1714; --px-ol:#544e4b;
+    --px-skin:#ffd6ae;  --px-skin2:#e0a87c;
+    --px-shoe:#4a3f37;
+    --px-hair-dk:#43372e; --px-hair-br:#9a6038; --px-hair-au:#d4723f; --px-hair-bl:#f2c04f;
+    --px-hair-gy:#aab4bd; --px-hair-pk:#f57fa8;
+    --px-blue:#5a9bff; --px-teal:#3fcb9b; --px-amber:#ffb63d; --px-red:#ff6b6b;
+    --px-violet:#9b83ff; --px-pink:#ff77b4; --px-cyan:#3cc4d8; --px-brown:#c98552;
+    --px-navy:#3d4a6b; --px-slate:#5a6373;
+    --px-white:#f7f9fb; --px-metal:#cdd5dd; --px-gold:#ffd76b;
+    --px-shadow:rgba(0,0,0,.55); --px-ghost:rgba(255,255,255,.22);
+    --px-st-idle:#6b7178; --px-st-biz:#7aaaff; --px-st-warn:#f59e0b;
+    --px-st-ok:#22c55e;  --px-st-err:#f25a5a;
+    --rm-leaf:#3fbf82; --rm-leaf2:#2c8d5e; --rm-pot:#b4653a;
+    --rm-water:#5fb8dc; --rm-cat:#d99a55; --rm-cat2:#b87c3c;
+    --av-bg:#1e2126;
+  }
+}
+html[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#0d0e10; --card:#151619; --fg:#f2f4f7; --fg2:#b9bfc7; --fg3:#7f8791;
+  --line:#ffffff26; --line2:#ffffff16; --chip:#1e2024;
+  --room:#17181c; --room-line:#ffffff10;
+  --aisle-bg:#131418; --aisle-dash:#262a31;
+  --desk-face:#333841; --desk-hi:#525a66; --desk-front:#1f2227; --desk-edge:#5a626e;
+  --chair:#2e333b; --chair-line:#4a515d;
+  --mon-bezel:#4a525e; --mon-screen:#0b0d11;
+  --px-ink:#1d1714; --px-ol:#544e4b;
+  --px-skin:#ffd6ae;  --px-skin2:#e0a87c;
+  --px-shoe:#4a3f37;
+  --px-hair-dk:#43372e; --px-hair-br:#9a6038; --px-hair-au:#d4723f; --px-hair-bl:#f2c04f;
+  --px-hair-gy:#aab4bd; --px-hair-pk:#f57fa8;
+  --px-blue:#5a9bff; --px-teal:#3fcb9b; --px-amber:#ffb63d; --px-red:#ff6b6b;
+  --px-violet:#9b83ff; --px-pink:#ff77b4; --px-cyan:#3cc4d8; --px-brown:#c98552;
+  --px-navy:#3d4a6b; --px-slate:#5a6373;
+  --px-white:#f7f9fb; --px-metal:#cdd5dd; --px-gold:#ffd76b;
+  --px-shadow:rgba(0,0,0,.55); --px-ghost:rgba(255,255,255,.22);
+  --px-st-idle:#6b7178; --px-st-biz:#7aaaff; --px-st-warn:#f59e0b;
+  --px-st-ok:#22c55e;  --px-st-err:#f25a5a;
+  --rm-leaf:#3fbf82; --rm-leaf2:#2c8d5e; --rm-pot:#b4653a;
+  --rm-water:#5fb8dc; --rm-cat:#d99a55; --rm-cat2:#b87c3c;
+  --av-bg:#1e2126;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);
+  font:13px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+.page{max-width:1040px;margin:0 auto;padding:28px 20px 72px}
+@media (max-width:430px){.page{padding:20px 10px 56px}}
+.hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.hd h1{font-size:17px;font-weight:650;letter-spacing:.2px;margin:0}
+.hd .tag{font-size:11px;color:var(--fg3);box-shadow:inset 0 0 0 1px var(--line);border-radius:99px;padding:1px 8px}
+.lede{color:var(--fg2);font-size:12.5px;margin:0 0 18px;max-width:66ch}
+.bar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin:0 0 18px;padding:9px 12px;
+  background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:10px}
+.grp{display:flex;align-items:center;gap:6px}
+.grp .lb{font-size:11px;color:var(--fg3);letter-spacing:.3px}
+.seg{display:inline-flex;background:var(--chip);border-radius:7px;padding:2px}
+.seg button{font:inherit;font-size:11.5px;border:0;background:transparent;color:var(--fg2);
+  padding:3px 9px;border-radius:5px;cursor:pointer;line-height:1.4}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:600}
+.seg button:focus-visible,#btn-pause:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+#btn-pause{font:inherit;font-size:11.5px;padding:4px 10px;border-radius:6px;border:0;background:var(--chip);color:var(--fg2);cursor:pointer}
+#btn-pause[aria-pressed="true"]{background:var(--focus);color:#fff}
+.note{font-size:11px;color:var(--fg3);margin-left:auto}
+
+.stage{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+.panel{width:300px;flex:0 0 auto;background:var(--card);
+  box-shadow:inset 0 0 0 1px var(--line),0 1px 3px rgba(0,0,0,.05);border-radius:12px;overflow:hidden}
+.panel[data-w="380"]{width:380px}
+.panel-hd{display:flex;align-items:center;justify-content:space-between;
+  padding:9px 12px;box-shadow:inset 0 -1px 0 var(--line);font-size:12px;font-weight:600}
+.panel-hd .cnt{font-weight:400;color:var(--fg3);font-size:11px}
+
+/* ── 纵向走廊 ─────────────────────────────────────────────── */
+.corridor{position:relative;background:var(--room);overflow:hidden;
+  --aisle:46px;--ho-fly:-19px;--desk-dx:-112px}
+.panel[data-w="380"] .corridor{--aisle:56px;--ho-fly:-24px;--desk-dx:-155px}
+.floor{display:grid;grid-template-columns:1fr var(--aisle) 1fr;height:80px;position:relative}
+.floor + .floor{margin-top:10px}
+.aisle{grid-column:2}
+.aisle-band{position:absolute;top:0;bottom:38px;left:calc((100% - var(--aisle))/2);width:var(--aisle);
+  background:var(--aisle-bg);z-index:0}
+.aisle-band::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;
+  background:repeating-linear-gradient(to bottom,var(--aisle-dash) 0 6px,transparent 6px 15px)}
+
+/* 工位：椅背 → 人 → 显示器 → 桌面（正面遮挡） */
+.seat{position:relative;width:104px;height:80px}
+.panel[data-w="380"] .seat{width:150px}
+.seat[data-side="left"]{grid-column:1;justify-self:end;padding-right:7px}
+.seat[data-side="right"]{grid-column:3;justify-self:start;padding-left:7px}
+.seat[data-picked="true"] .desk-front,
+.seat[data-picked="true"] .desk-top{filter:brightness(1.06) saturate(1.25)}
+.seat:focus-visible{outline:none}
+.seat:focus-visible .desk-top{box-shadow:inset 0 0 0 2px var(--focus)}
+.chair{position:absolute;bottom:44px;left:13px;width:34px;height:27px;border-radius:9px 9px 3px 3px;
+  background:var(--chair);box-shadow:inset 0 0 0 1px var(--chair-line);z-index:0}
+.chair::before{content:"";position:absolute;left:3px;top:2px;width:3px;height:20px;border-radius:2px;
+  background:color-mix(in srgb,var(--chair) 55%,#ffffff)}
+.mascot{position:absolute;bottom:34px;left:8px;width:44px;height:46px;z-index:1}
+.monitor{position:absolute;bottom:44px;right:6px;width:34px;height:34px;z-index:2}
+.desk-top{position:absolute;left:0;right:0;bottom:34px;height:10px;z-index:3;
+  background:var(--desk-face);border-radius:2px 2px 0 0;
+  box-shadow:inset 0 2px 0 var(--desk-hi),inset 0 -1px 0 var(--desk-edge)}
+.desk-front{position:absolute;left:0;right:0;bottom:22px;height:12px;z-index:3;background:var(--desk-front);
+  box-shadow:inset 0 1px 0 var(--desk-edge),inset 0 -1px 0 var(--desk-edge)}
+.desk-front::before,.desk-front::after{content:"";position:absolute;top:100%;width:5px;height:16px;
+  background:var(--desk-front);box-shadow:inset 0 0 0 1px var(--desk-edge)}
+.desk-front::before{left:1px}
+.desk-front::after{right:1px}
+.seat[data-side="right"] .chair{left:auto;right:13px}
+.seat[data-side="right"] .chair::before{left:auto;right:3px}
+.seat[data-side="right"] .mascot{left:auto;right:8px}
+.seat[data-side="right"] .monitor{right:auto;left:6px}
+.plate{position:absolute;left:0;right:0;bottom:0;height:22px;display:flex;align-items:center;gap:4px;
+  padding:0 8px;min-width:0;z-index:4}
+.plate .dot{width:5px;height:5px;border-radius:1px;flex:none;background:var(--st)}
+.plate b{font-size:10.5px;font-weight:600;line-height:1;white-space:nowrap}
+.plate i{font-size:9.5px;font-style:normal;color:var(--fg3);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plate .sp{flex:1 1 auto;min-width:2px}
+.seat[data-state="failed"] .mascot{opacity:.55}
+.seat[data-state="failed"] .desk-top,.seat[data-state="failed"] .desk-front{opacity:.7}
+
+/* 走动人 / 客人 / 飞卡 */
+.actor{position:absolute;width:44px;height:46px;z-index:5;pointer-events:none}
+.actor .pose{position:absolute;inset:0;opacity:0}
+.actor .pose svg{display:block}
+.walker{top:0;left:calc((100% - var(--aisle))/2 + (var(--aisle) - 44px)/2);transform:translateX(var(--desk-dx))}
+.walker .pose[data-p="idle"]{opacity:1}
+.guest{top:180px;left:calc((100% - var(--aisle))/2 - 59px)}
+.card-fly{position:absolute;top:210px;left:calc((100% - var(--aisle))/2 + 1px);width:6px;height:8px;z-index:6}
+.card-fly i{position:absolute;inset:0;opacity:0}
+
+/* 底部地面条 */
+.strip{height:28px;margin-top:10px;position:relative;box-shadow:inset 0 1px 0 var(--room-line)}
+.prop-plant{position:absolute;left:10px;bottom:2px}
+.prop-cat{position:absolute;right:10px;bottom:2px}
+
+/* ── 圆形头像（正式代码形状） ─────────────────────────────── */
+.av{position:relative;border-radius:50%;flex:none;overflow:hidden;background:var(--av-bg)}
+.av svg{display:block}
+.av::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 2px var(--st)}
+.av[data-state="provisioning"]::after{box-shadow:none;border:2px dashed var(--st);animation:spin 3.2s linear infinite}
+.av[data-state="working"]::after,.av[data-state="waiting"]::after{animation:ringPulse 1.9s ease-in-out infinite}
+.av[data-state="done"]::after{box-shadow:inset 0 0 0 2px var(--st),inset 0 0 0 3px color-mix(in srgb,var(--st) 35%,transparent)}
+@keyframes ringPulse{0%,100%{box-shadow:inset 0 0 0 2px var(--st)}
+  50%{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--st) 40%,transparent)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.av36{width:36px;height:36px}
+.av24{width:24px;height:24px}
+.av24::after{box-shadow:inset 0 0 0 2px var(--st)}
+
+.compact{padding:8px 10px 10px;box-shadow:inset 0 1px 0 var(--line)}
+.compact-hd{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 6px}
+.compact-hd h2{font-size:11.5px;font-weight:650;margin:0}
+.compact-hd span{font-size:10px;color:var(--fg3)}
+.crow{display:flex;align-items:center;gap:8px;height:42px}
+.crow + .crow{box-shadow:inset 0 1px 0 var(--line2)}
+.crow b{font-size:11.5px;font-weight:600;flex:0 0 auto}
+.crow i{font-size:10px;font-style:normal;color:var(--fg3);flex:1 1 auto;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crow .dot{width:5px;height:5px;border-radius:1px;flex:none;background:var(--st)}
+
+.ringsec{margin-top:22px;padding:14px 16px 16px;background:var(--card);
+  box-shadow:inset 0 0 0 1px var(--line);border-radius:12px}
+.ringsec-hd{display:flex;align-items:baseline;gap:10px;margin:0 0 12px;flex-wrap:wrap}
+.ringsec-hd h2{font-size:12.5px;margin:0}
+.ringsec-hd span{font-size:11px;color:var(--fg3)}
+.rings{display:flex;gap:22px;flex-wrap:wrap}
+.ring-cell{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ring-cell em{font-size:9px;font-style:normal;color:var(--fg3)}
+.av144{width:144px;height:144px}
+
+/* 像素精灵 */
+.px{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+.p-eyes-c{opacity:0}
+.p-badge{opacity:0}
+.p-badge.on{opacity:1}
+
+.side{flex:1 1 320px;min-width:280px;max-width:560px}
+.side h2{font-size:12.5px;margin:0 0 8px}
+.side p{font-size:12px;color:var(--fg2);margin:0 0 10px}
+.side code{font:11.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--chip);
+  padding:1px 5px;border-radius:4px;color:var(--fg)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 0;font-size:11px;color:var(--fg3)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+/* ── 动画 ─────────────────────────────────────────────────── */
+@keyframes breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
+@keyframes blink{0%,90%{opacity:1}92%,96%{opacity:0}98%,100%{opacity:1}}
+@keyframes blinkc{0%,90%{opacity:0}92%,96%{opacity:1}98%,100%{opacity:0}}
+@keyframes typeL{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
+@keyframes typeR{0%,100%{transform:translateY(-1px)}50%{transform:translateY(0)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
+@keyframes tap{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes hop{0%,58%{transform:translateY(0)}64%,72%{transform:translateY(-3px)}78%,100%{transform:translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-1px)}40%,80%{transform:translateX(1px)}}
+@keyframes flick{0%,100%{opacity:1}40%,60%{opacity:.5}}
+@keyframes ghostflick{0%,100%{opacity:.55}50%{opacity:.82}}
+@keyframes rise{0%,100%{transform:translateY(0);opacity:.35}50%{transform:translateY(-2px);opacity:1}}
+@keyframes badgeIn{0%,100%{opacity:1;transform:translateY(0)}50%{transform:translateY(-1px)}}
+@keyframes shoeLw{0%,100%{transform:translate(-1px,0)}25%{transform:translate(0,-2px)}50%{transform:translate(1px,0)}75%{transform:translate(0,0)}}
+@keyframes shoeRw{0%,100%{transform:translate(1px,0)}25%{transform:translate(0,0)}50%{transform:translate(-1px,0)}75%{transform:translate(0,-2px)}}
+@keyframes armLw{0%,100%{transform:translateX(-1px)}25%{transform:translateX(0)}50%{transform:translateX(1px)}75%{transform:translateX(0)}}
+@keyframes armRw{0%,100%{transform:translateX(1px)}25%{transform:translateX(0)}50%{transform:translateX(-1px)}75%{transform:translateX(0)}}
+@keyframes walkBob{0%,100%{transform:translateY(0)}25%{transform:translateY(-1px)}50%{transform:translateY(0)}75%{transform:translateY(-1px)}}
+
+[data-state="idle"] .p-body{animation:breathe calc(2.8s / var(--speed,1)) step-end infinite}
+[data-state="idle"] .p-eyes-o{animation:blink calc(4.6s / var(--speed,1)) step-end infinite}
+[data-state="idle"] .p-eyes-c{animation:blinkc calc(4.6s / var(--speed,1)) step-end infinite}
+[data-state="working"] .p-arml{animation:typeL calc(.42s / var(--speed,1)) step-end infinite}
+[data-state="working"] .p-armr{animation:typeR calc(.42s / var(--speed,1)) step-end infinite}
+[data-state="working"] .p-body{animation:bob calc(1.7s / var(--speed,1)) step-end infinite}
+[data-state="working"] .p-eyes-o{animation:blink calc(6.2s / var(--speed,1)) step-end infinite}
+[data-state="working"] .p-eyes-c{animation:blinkc calc(6.2s / var(--speed,1)) step-end infinite}
+[data-state="waiting"] .p-legr{animation:tap calc(.9s / var(--speed,1)) step-end infinite}
+[data-state="waiting"] .p-body{animation:breathe calc(2.2s / var(--speed,1)) step-end infinite}
+[data-state="waiting"] .p-badge{animation:badgeIn calc(1.6s / var(--speed,1)) step-end infinite}
+[data-state="waiting"] .p-eyes-o{animation:blink calc(3.4s / var(--speed,1)) step-end infinite}
+[data-state="waiting"] .p-eyes-c{animation:blinkc calc(3.4s / var(--speed,1)) step-end infinite}
+[data-state="done"] .p-body{animation:hop calc(2.6s / var(--speed,1)) step-end infinite}
+[data-state="done"] .p-badge{animation:badgeIn calc(1.3s / var(--speed,1)) step-end infinite}
+[data-state="error"] .p-body{animation:shake calc(.9s / var(--speed,1)) step-end infinite}
+[data-state="error"] .p-badge{animation:badgeIn calc(1.1s / var(--speed,1)) step-end infinite}
+[data-state="failed"] .p-body{animation:ghostflick calc(3.4s / var(--speed,1)) step-end infinite}
+[data-state="provisioning"] .p-body{animation:flick calc(1.8s / var(--speed,1)) step-end infinite}
+[data-state="provisioning"] .p-fx{animation:rise calc(1.2s / var(--speed,1)) step-end infinite}
+
+.seat[data-action] .pose{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center}
+.seat[data-action] .mascot .pose + .pose{opacity:0}
+@keyframes actCoffee{0%,70%{opacity:0}72%,86%{opacity:1}88%,100%{opacity:0}}
+@keyframes actCoffeeBase{0%,70%{opacity:1}72%,86%{opacity:0}88%,100%{opacity:1}}
+@keyframes actStretch{0%,44%{opacity:0}46%,58%{opacity:1}60%,100%{opacity:0}}
+@keyframes actStretchBase{0%,44%{opacity:1}46%,58%{opacity:0}60%,100%{opacity:1}}
+.seat[data-action="coffee"] .act{animation:actCoffee calc(13s / var(--speed,1)) step-end infinite}
+.seat[data-action="coffee"] .base{animation:actCoffeeBase calc(13s / var(--speed,1)) step-end infinite}
+.seat[data-action="stretch"] .act{animation:actStretch calc(11s / var(--speed,1)) step-end infinite;
+  animation-delay:calc(-3.4s / var(--speed,1))}
+.seat[data-action="stretch"] .base{animation:actStretchBase calc(11s / var(--speed,1)) step-end infinite;
+  animation-delay:calc(-3.4s / var(--speed,1))}
+
+.walking .p-shoel{animation:shoeLw calc(.64s / var(--speed,1)) step-end infinite}
+.walking .p-shoer{animation:shoeRw calc(.64s / var(--speed,1)) step-end infinite}
+.walking .p-body{animation:walkBob calc(.64s / var(--speed,1)) step-end infinite}
+.walking .p-arml{animation:armLw calc(.64s / var(--speed,1)) step-end infinite}
+.walking .p-armr{animation:armRw calc(.64s / var(--speed,1)) step-end infinite}
+
+.paused *,.paused *::before,.paused *::after{animation-play-state:paused !important}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none !important}}
+
+.ft{margin-top:26px;padding-top:14px;box-shadow:inset 0 1px 0 var(--line);color:var(--fg2);font-size:12px}
+.ft h2{font-size:12px;color:var(--fg);margin:0 0 6px}
+.ft p{margin:0 0 8px;max-width:78ch}
+.ft b{color:var(--fg)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hd">
+    <h1>方向三 · 纵向走廊</h1>
+    <span class="tag">8 工位交错单列 · 44×46 原生网格</span>
+    <span class="tag">圆形头像 36 / 24</span>
+  </div>
+  <p class="lede">工位有桌子、椅背、显示器；过道压到最低对比度；人物按 44×46 原生网格重画（不是缩放）；
+    头像按正式代码的圆形 + 2px 状态环做。</p>
+
+  <div class="bar">
+    <div class="grp"><span class="lb">主题</span>
+      <div class="seg">
+        <button data-k="theme" data-v="auto" aria-pressed="true">跟随系统</button>
+        <button data-k="theme" data-v="light" aria-pressed="false">浅色</button>
+        <button data-k="theme" data-v="dark" aria-pressed="false">深色</button>
+      </div>
+    </div>
+    <div class="grp"><span class="lb">宽度</span>
+      <div class="seg">
+        <button data-k="width" data-v="300" aria-pressed="true">300</button>
+        <button data-k="width" data-v="380" aria-pressed="false">380</button>
+      </div>
+    </div>
+    <div class="grp"><span class="lb">速度</span>
+      <div class="seg">
+        <button data-k="speed" data-v="0.5" aria-pressed="false">0.5×</button>
+        <button data-k="speed" data-v="1" aria-pressed="true">1×</button>
+        <button data-k="speed" data-v="2" aria-pressed="false">2×</button>
+      </div>
+    </div>
+    <div class="grp"><button id="btn-pause" aria-pressed="false">暂停</button></div>
+    <span class="note" id="motion-note"></span>
+  </div>
+
+  <div class="stage">
+    <div class="panel" id="panel" data-w="300">
+      <div class="panel-hd"><span>员工办公室</span><span class="cnt">8 人 · 实时</span></div>
+      <div class="corridor" id="corridor"></div>
+
+      <div class="compact">
+        <div class="compact-hd"><h2>紧凑态 · 36px 圆形</h2><span>2px 状态环</span></div>
+        <div id="compact"></div>
+      </div>
+
+      <div class="compact" style="box-shadow:inset 0 1px 0 var(--line)">
+        <div class="compact-hd"><h2>紧凑态 · 24px 圆形</h2><span>r=10 安全区</span></div>
+        <div id="compact24"></div>
+      </div>
+
+    </div>
+
+    <div class="side">
+      <h2>这一版改了什么</h2>
+      <p><b>① 桌子</b>：桌面（正面遮挡条 + 2px 高光边 + 1px 压边）、椅背（人物身后弧形，带左侧高光）、
+        显示器（屏幕 + 背光 + 底座）。层序是椅背 → 人 → 显示器 → 桌面遮挡条，
+        所以人是「坐/站在桌子后面」，脚被桌面切掉。</p>
+      <p><b>② 过道</b>：从蓝白条纹改成中性地面（比房间底色深约 4%），中间只留 1px 虚线，
+        对比度压到全场最低，不再像滚动条。</p>
+      <p><b>③ 人物</b>：44×46 原生网格重画，不再缩 32×40。多出来的 12px 宽度用来放：
+        4px 手臂 + 拇指与指节、躯干 2 处衣褶、头发两层色阶、鼻/嘴/眉、4px 宽的脖子。</p>
+      <p><b>④ 头像</b>：正式代码是圆形（<code>circle r=31</code> + 2px 状态环）。这里做 36 和 24 两版圆形，
+        内容只画在 r=16 / r=10 安全区内，环压在边缘 2px 上、不碰像素。</p>
+      <div class="legend">
+        <span><i style="background:var(--px-st-biz)"></i>状态色只上环 / 徽标 / 铭牌点</span>
+        <span><i style="background:var(--px-blue)"></i>身份色只上衣服 / 配饰</span>
+        <span><i style="background:var(--desk-hi)"></i>家具用中性灰，不抢人物</span>
+      </div>
+    </div>
+  </div>
+
+  <section class="ringsec">
+    <div class="ringsec-hd"><h2>状态环 × 4 态（4× 放大）</h2>
+      <span>36px 圆 → 144px；内容裁在 r=16 内，2px 环压边缘，不碰像素</span></div>
+    <div class="rings" id="rings"></div>
+  </section>
+
+  <div class="ft">
+    <h2>几何与实现</h2>
+    <p><b>工位</b> 104 宽（380 时 150）/ 80 高：铭牌 22 + 桌面前挡 12 + 桌面 10 + 人物槽 44×46。
+      椅背 34×27 在人物身后，显示器 34×34（含底座）坐在桌面线上。</p>
+    <p><b>排布</b>：8 行交错单列（一人一行、左右交替、中间 46px 过道，380 时 56），
+      行高 80 + 行距 10，走廊总高 710 —— 侧栏本来就能滚，不为了塞进一屏牺牲「像办公室」。</p>
+    <p><b>编舞</b> 18s：小前从 1 号工位出座 → 沿过道下走 180px（两行）到 3 号 → 递文件 →
+      小审接住点头 → 各自回座。位移全部整数像素 + 分段 easing。</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var INK='var(--px-ink)', OL='var(--px-ol)', SK='var(--px-skin)', SK2='var(--px-skin2)', HA='var(--c-hair)',
+      SH='var(--c-shirt)', PA='var(--c-pants)', SO='var(--px-shoe)', AC='var(--c-accent)',
+      WH='var(--px-white)', MT='var(--px-metal)', GD='var(--px-gold)';
+
+  function R(x,y,w,h,c){ return {x:x,y:y,w:w,h:h,c:c}; }
+  function lit(c,p){ return 'color-mix(in srgb,'+c+' '+p+'%,#ffffff)'; }
+  function dim(c,p){ return 'color-mix(in srgb,'+c+' '+p+'%,var(--px-ink))'; }
+
+  function paths(rs){
+    var by={}, out=[], i, r, c, k;
+    for(i=0;i<rs.length;i++){ r=rs[i]; (by[r.c]||(by[r.c]=[])).push(r); }
+    for(c in by){
+      var list=by[c], rows={};
+      for(i=0;i<list.length;i++){
+        r=list[i];
+        for(k=0;k<r.h;k++){ var key=r.y+k; (rows[key]||(rows[key]=[])).push([r.x,r.x+r.w]); }
+      }
+      var d='';
+      for(var y in rows){
+        var segs=rows[y].sort(function(a,b){return a[0]-b[0];}), cur=null;
+        for(i=0;i<segs.length;i++){
+          if(cur && segs[i][0]<=cur[1]){ cur[1]=Math.max(cur[1],segs[i][1]); }
+          else { if(cur) d+='M'+cur[0]+' '+y+'h'+(cur[1]-cur[0])+'v1h'+(cur[0]-cur[1])+'z'; cur=[segs[i][0],segs[i][1]]; }
+        }
+        if(cur) d+='M'+cur[0]+' '+y+'h'+(cur[1]-cur[0])+'v1h'+(cur[0]-cur[1])+'z';
+      }
+      out.push('<path fill="'+c+'" d="'+d+'"/>');
+    }
+    return out.join('');
+  }
+
+  var MASK=new Uint8Array(64*64);
+  function outline(rects,W,H){
+    W=W||44; H=H||46;
+    if(MASK.length<W*H) MASK=new Uint8Array(W*H);
+    MASK.fill(0);
+    var i,r,x,y;
+    for(i=0;i<rects.length;i++){
+      r=rects[i];
+      for(y=Math.max(0,r.y);y<Math.min(H,r.y+r.h);y++)
+        for(x=Math.max(0,r.x);x<Math.min(W,r.x+r.w);x++) MASK[y*W+x]=1;
+    }
+    var out=[];
+    for(y=0;y<H;y++)for(x=0;x<W;x++){
+      if(MASK[y*W+x]) continue;
+      if((x>0&&MASK[y*W+x-1])||(x<W-1&&MASK[y*W+x+1])||(y>0&&MASK[(y-1)*W+x])||(y<H-1&&MASK[(y+1)*W+x]))
+        out.push(R(x,y,1,1,OL));
+    }
+    return out;
+  }
+
+  var CHARS=[
+    {id:'pm',        name:'阿策', role:'产品', hair:'--px-hair-br', shirt:'--px-amber',  pants:'--px-navy',  accent:'--px-amber',  style:'side',  prop:'clipboard'},
+    {id:'frontend',  name:'小前', role:'前端', hair:'--px-hair-dk', shirt:'--px-blue',   pants:'--px-slate', accent:'--px-blue',   style:'messy', prop:'headphone'},
+    {id:'backend',   name:'老后', role:'后端', hair:'--px-hair-dk', shirt:'--px-teal',   pants:'--px-navy',  accent:'--px-teal',   style:'short', prop:'rack', build:'broad'},
+    {id:'reviewer',  name:'小审', role:'审查', hair:'--px-hair-au', shirt:'--px-red',    pants:'--px-slate', accent:'--px-red',    style:'bun',   prop:'lens'},
+    {id:'researcher',name:'小研', role:'研究', hair:'--px-hair-au', shirt:'--px-white',  pants:'--px-slate', accent:'--px-violet', style:'wild',  prop:'book'},
+    {id:'designer',  name:'小设', role:'设计', hair:'--px-hair-pk', shirt:'--px-violet', pants:'--px-navy',  accent:'--px-pink',   style:'long',  prop:'palette'},
+    {id:'ops',       name:'老运', role:'运维', hair:'--px-hair-gy', shirt:'--px-cyan',   pants:'--px-navy',  accent:'--px-cyan',   style:'cap',   prop:'wrench'},
+    {id:'writer',    name:'笔笔', role:'文案', hair:'--px-hair-bl', shirt:'--px-brown',  pants:'--px-slate', accent:'--px-amber',  style:'pony',  prop:'paper'}
+  ];
+  var BY_ID={}; CHARS.forEach(function(c){ BY_ID[c.id]=c; });
+
+  /* ══ 44×46 原生网格 ═══════════════════════════════════════
+     头 x15..28 / 脸 y6..17 / 发 y2..6 / 颈 y18
+     躯干 x11..32 y19..31 / 臂 x7..10 & x33..36
+     腿 y32..41 / 鞋 y42..43 / 影 y44..45                       */
+  function hair(style,P){
+    function h(x,y,w,hh,c){ P.head.push(R(x,y,w,hh,c||HA)); }
+    switch(style){
+      case 'side':
+        h(15,2,14,3); h(14,5,1,4); h(29,5,1,3);
+        h(15,5,5,1); h(23,5,5,1); h(18,2,2,1,dim(HA,45));
+        break;
+      case 'messy':
+        h(15,1,14,3); h(17,0,2,1); h(21,0,3,1); h(26,0,2,1);
+        h(15,4,1,4); h(19,4,1,2); h(26,4,1,4); h(22,4,2,1,dim(HA,45));
+        break;
+      case 'short':
+        h(16,2,12,3); h(15,4,1,2); h(28,4,1,2); h(19,2,2,1,dim(HA,45));
+        P.head.push(R(16,16,12,1,INK), R(17,17,10,1,INK), R(18,15,8,1,INK),
+                    R(16,14,1,1,INK), R(27,14,1,1,INK));
+        break;
+      case 'bun':
+        h(15,2,14,3); h(14,5,1,5); h(29,5,1,5); h(15,5,14,1);
+        h(19,0,6,2); h(18,1,1,1); h(25,1,1,1);
+        P.head.push(R(16,8,6,1,MT),R(16,12,6,1,MT),R(22,8,6,1,MT),R(22,12,6,1,MT),R(21,10,1,1,MT));
+        break;
+      case 'wild':
+        h(13,1,18,4); h(12,3,1,6); h(31,3,1,6);
+        h(16,0,3,1); h(21,0,3,1); h(26,0,2,1); h(19,4,4,1,dim(HA,45));
+        break;
+      case 'long':
+        h(15,2,14,3); h(12,5,3,15); h(29,5,3,15); h(15,5,14,1);
+        P.head.push(R(13,0,18,3,PA), R(12,1,1,1,PA), R(22,-1,2,2,PA), R(28,0,3,1,PA));
+        break;
+      case 'cap':
+        h(15,2,14,1); h(14,4,1,3); h(29,4,1,3);
+        P.head.push(R(15,1,14,3,PA), R(11,4,5,1,AC), R(21,0,2,1,AC), R(15,1,14,1,dim(PA,60)));
+        break;
+      case 'pony':
+        h(15,2,14,3); h(15,5,4,1); h(23,5,5,1);
+        h(29,4,3,5); h(30,8,3,7); h(29,5,1,1,AC);
+        break;
+    }
+  }
+
+  function prop(kind,P){
+    switch(kind){
+      case 'clipboard':
+        P.prop.push(R(5,23,10,16,WH),R(5,23,10,1,MT),R(8,21,4,2,INK),
+                    R(7,27,6,1,INK),R(7,30,6,1,INK),R(7,33,4,1,INK));
+        break;
+      case 'headphone':
+        P.prop.push(R(15,1,14,1,AC), R(12,4,2,9,AC), R(30,4,2,9,AC),
+                    R(12,4,2,1,dim(AC,55)), R(30,4,2,1,dim(AC,55)));
+        break;
+      case 'rack':
+        P.prop.push(R(18,23,8,7,INK),R(19,24,6,1,AC),R(19,26,6,1,AC),R(19,28,6,1,AC));
+        break;
+      case 'lens':
+        P.prop.push(R(31,23,8,1,INK),R(31,30,8,1,INK),R(31,24,1,6,INK),R(38,24,1,6,INK));
+        P.prop.push(R(32,24,6,6,lit(AC,55)),R(35,31,1,2,INK),R(35,33,4,1,INK));
+        break;
+      case 'book':
+        P.prop.push(R(4,23,12,16,AC),R(5,24,10,14,WH),R(4,23,12,1,dim(AC,50)),R(9,23,1,16,AC));
+        P.prop.push(R(7,27,1,1,INK),R(7,30,1,1,INK),R(7,33,1,1,INK));
+        break;
+      case 'palette':
+        P.prop.push(R(30,24,12,6,MT),R(30,24,12,1,dim(MT,50)));
+        P.prop.push(R(32,25,2,2,AC),R(35,25,2,2,'var(--px-cyan)'),R(38,25,2,2,'var(--px-amber)'));
+        break;
+      case 'wrench':
+        P.prop.push(R(34,19,3,2,MT),R(33,20,1,1,MT),R(35,21,2,12,MT),R(34,32,3,1,MT));
+        break;
+      case 'paper':
+        P.prop.push(R(4,23,9,16,WH),R(5,27,6,1,INK),R(5,30,6,1,INK),R(5,33,4,1,INK));
+        P.prop.push(R(13,19,1,4,GD));
+        break;
+    }
+  }
+
+  function badge(state,P){
+    var col={done:'var(--px-st-ok)',error:'var(--px-st-err)',failed:'var(--px-st-err)',
+             waiting:'var(--px-st-warn)',provisioning:'var(--px-st-biz)'}[state];
+    if(!col) return;
+    P.badge.push(R(37,1,5,1,col), R(36,2,7,5,col), R(37,7,5,1,col));
+    var g=[], x=37, y=2;
+    if(state==='done') g=[[1,2],[2,3],[3,2],[4,1],[4,0]];
+    else if(state==='error'||state==='failed') g=[[1,0],[3,0],[2,1],[1,2],[3,2],[2,3]];
+    else if(state==='waiting') g=[[1,0],[2,0],[3,1],[2,2],[2,4]];
+    else g=[[1,2],[2,2],[3,2]];
+    g.forEach(function(p){ P.badge.push(R(x+p[0],y+p[1],1,1,WH)); });
+  }
+
+  function cardRects(kind){
+    var r=[];
+    if(kind==='flat'){ r.push(R(0,0,8,3,INK),R(0,1,8,1,WH),R(5,0,2,1,'var(--px-st-biz)'),R(0,0,2,1,MT)); }
+    else { r.push(R(0,0,6,8,INK),R(1,1,4,6,WH),R(1,2,3,1,INK),R(1,4,3,1,INK),R(1,6,2,1,INK),R(3,0,2,2,'var(--px-st-biz)'),R(1,1,2,1,MT)); }
+    return r;
+  }
+
+  function build(def,pose){
+    pose=pose||{};
+    var P={head:[],torso:[],arml:[],armr:[],legl:[],legr:[],shoel:[],shoer:[],card:[],prop:[],
+           eyesO:[],eyesC:[],badge:[],fx:[],cup:[]};
+    var eyes=pose.eyes||'open', legs=pose.legs||'stand', arms=pose.arms||'down',
+        fdx=pose.face==='right'?1:(pose.face==='left'?-1:0),
+        hy=pose.headDy||0, broad=def.build==='broad';
+
+    if(pose.ghost){
+      P.fx.push(R(14,44,4,1,'var(--px-ghost)'),R(19,44,4,1,'var(--px-ghost)'),R(25,44,4,1,'var(--px-ghost)'));
+    }else if(pose.shadow!==false){
+      P.fx.push(R(15,44,14,1,'var(--px-shadow)'),R(17,45,10,1,'var(--px-shadow)'));
+    }
+    if(pose.dots){
+      P.fx.push(R(4,34,2,2,'var(--px-st-biz)'),R(4,28,2,2,'var(--px-st-biz)'),R(4,22,2,2,'var(--px-st-biz)'));
+    }
+
+    /* 腿 y32..41，鞋 y42..43 */
+    if(legs!=='none'){
+      var slx=0,sly=0,srx=0,sry=0;
+      if(legs==='A'){slx=-1;srx=1;}
+      else if(legs==='B'){slx=1;srx=-1;}
+      else if(legs==='passL'){sly=-2;}
+      else if(legs==='passR'){sry=-2;}
+      else if(legs==='tap'){sry=-2;}
+      P.legl.push(R(13,32,7,10,PA), R(13,32,2,10,lit(PA,16)));
+      P.legr.push(R(24,32,7,10,PA), R(24,32,2,10,lit(PA,16)));
+      P.shoel.push(R(12+slx,42+sly,9,2,SO), R(12+slx,44+sly,9,1,dim(SO,35)));
+      P.shoer.push(R(23+srx,42+sry,9,2,SO), R(23+srx,44+sry,9,1,dim(SO,35)));
+    }
+
+    /* 躯干 x11..32 y19..31 */
+    var tx=broad?10:11, tw=broad?24:22;
+    P.torso.push(R(tx,19,tw,13,SH));
+    P.torso.push(R(tx,19,2,13,lit(SH,16)));
+    P.torso.push(R(tx+tw-2,19,2,13,dim(SH,26)));
+    P.torso.push(R(tx,31,tw,1,dim(SH,26)));
+    P.torso.push(R(19,19,6,1,SK2));                 /* 领口 */
+    P.torso.push(R(15,26,2,3,dim(SH,16)));          /* 衣褶 1 */
+    P.torso.push(R(28,23,2,2,dim(SH,16)));          /* 衣褶 2 */
+    if(def.id==='ops'){ P.torso.push(R(16,22,10,9,PA),R(16,19,3,3,PA),R(23,19,3,3,PA),R(17,23,1,1,MT),R(17,25,1,1,MT)); }
+    if(def.id==='researcher'){ P.torso.push(R(16,19,3,13,WH),R(23,19,3,13,WH),R(17,20,1,1,AC),R(18,21,1,1,AC)); }
+
+    if(pose.prop!==false) prop(def.prop,P);
+
+    /* 手臂 4px 宽 + 拇指 + 指节 */
+    var axl=7, axr=33;
+    function armDown(x,side){
+      var g = side<0?P.arml:P.armr;
+      g.push(R(x,20,4,8,SH), R(x,20,1,8,lit(SH,16)), R(x+3,20,1,8,dim(SH,26)));
+      g.push(R(x,28,4,3,SK));
+      g.push(R(x+(side<0?4:-1),31,1,2,SK2));        /* 拇指 */
+      g.push(R(x,31,4,3,SK));
+      g.push(R(x,33,4,1,SK2));                       /* 指节 */
+    }
+    if(pose.card){
+      var cx = pose.card==='give' ? 36 : 0;
+      var cy = pose.card==='catch' ? 27 : 28;
+      P.card.push.apply(P.card, cardRects('stand').map(function(r){ return R(r.x+cx, r.y+cy, r.w, r.h, r.c); }));
+    }
+    if(arms==='down'){ armDown(axl,-1); armDown(axr,1); }
+    else if(arms==='type'){
+      P.arml.push(R(9,21,4,7,SH),R(9,21,1,7,lit(SH,16)),R(10,27,4,3,SK),R(10,30,4,1,SK2));
+      P.armr.push(R(31,21,4,7,SH),R(31,21,1,7,lit(SH,16)),R(30,27,4,3,SK),R(30,30,4,1,SK2));
+    }
+    else if(arms==='give'){ armDown(axl,-1); P.armr.push(R(33,26,8,4,SH),R(33,26,1,4,lit(SH,16)),R(41,26,3,4,SK),R(41,29,3,1,SK2)); }
+    else if(arms==='take'){ armDown(axr,1); P.arml.push(R(3,26,8,4,SH),R(3,26,1,4,lit(SH,16)),R(0,26,3,4,SK),R(0,29,3,1,SK2)); }
+    else if(arms==='catch'){ armDown(axr,1); P.arml.push(R(3,25,8,4,SH),R(3,25,1,4,lit(SH,16)),R(0,25,3,4,SK),R(0,28,3,1,SK2)); }
+    else if(arms==='up'){ P.arml.push(R(7,13,4,11,SH),R(7,13,1,11,lit(SH,16)),R(7,9,4,4,SK));
+      P.armr.push(R(33,13,4,11,SH),R(33,13,1,11,lit(SH,16)),R(33,9,4,4,SK)); }
+    else if(arms==='wave'){ armDown(axl,-1); P.armr.push(R(33,13,4,11,SH),R(33,13,1,11,lit(SH,16)),R(33,9,4,4,SK)); }
+    else if(arms==='coffee'){ armDown(axl,-1);
+      P.armr.push(R(33,21,4,8,SH),R(33,21,1,8,lit(SH,16)),R(31,16,4,4,SK));
+      P.cup.push(R(29,11,6,6,WH),R(29,11,6,1,MT),R(35,13,1,3,WH),R(30,10,3,1,'var(--px-brown)')); }
+    else if(arms==='swingA'){
+      P.arml.push(R(6,20,4,8,SH),R(6,20,1,8,lit(SH,16)),R(6,28,4,6,SK));
+      P.armr.push(R(34,20,4,8,SH),R(34,20,1,8,lit(SH,16)),R(34,28,4,6,SK)); }
+    else if(arms==='swingB'){
+      P.arml.push(R(8,20,4,8,SH),R(8,20,1,8,lit(SH,16)),R(8,28,4,6,SK));
+      P.armr.push(R(32,20,4,8,SH),R(32,20,1,8,lit(SH,16)),R(32,28,4,6,SK)); }
+
+    /* 头 */
+    P.head.push(R(15,6+hy,14,12,SK));
+    P.head.push(R(15,6+hy,1,12,lit(SK,14)));
+    P.head.push(R(14,9+hy,1,3,SK),R(29,9+hy,1,3,SK));
+    P.head.push(R(15,17+hy,14,1,SK2));
+    P.head.push(R(21,13+hy,1,1,SK2));                 /* 鼻 */
+    P.head.push(R(20,15+hy,3,1,SK2));                 /* 嘴 */
+    hair(def.style,P);
+    P.head.push(R(19,18+hy,6,2,SK2));                 /* 颈 */
+
+    if(eyes==='x'){
+      P.eyesO.push(R(17,9+hy,1,1,INK),R(19,9+hy,1,1,INK),R(18,10+hy,1,1,INK),R(17,11+hy,1,1,INK),R(19,11+hy,1,1,INK));
+      P.eyesO.push(R(24,9+hy,1,1,INK),R(26,9+hy,1,1,INK),R(25,10+hy,1,1,INK),R(24,11+hy,1,1,INK),R(26,11+hy,1,1,INK));
+    }else if(eyes==='shut'){
+      P.eyesC.push(R(18+fdx,11+hy,2,1,INK),R(24+fdx,11+hy,2,1,INK));
+    }else{
+      P.eyesO.push(R(18+fdx,10+hy,2,2,INK),R(24+fdx,10+hy,2,2,INK));
+      P.eyesC.push(R(18+fdx,11+hy,2,1,INK),R(24+fdx,11+hy,2,1,INK));
+    }
+
+    if(pose.state) badge(pose.state,P);
+    return P;
+  }
+
+  function sprite(def,pose){
+    var P=build(def,pose);
+    var style='--c-hair:var('+def.hair+');--c-shirt:var('+def.shirt+');--c-pants:var('+def.pants+');--c-accent:var('+def.accent+')';
+    function g(n,rs){ return rs.length?'<g class="p-'+n+'">'+paths(rs)+'</g>':''; }
+    var body=[].concat(P.torso,P.card,P.arml,P.armr,P.head,P.prop,P.legl,P.legr,P.shoel,P.shoer);
+    var badgeOn=(pose&&pose.state)?' on':'';
+    return '<svg class="px" style="'+style+'" viewBox="0 0 44 46" width="44" height="46" shape-rendering="crispEdges" aria-hidden="true">'+
+      paths(outline(body,44,46))+
+      g('fx',P.fx)+g('legl',P.legl)+g('legr',P.legr)+g('shoel',P.shoel)+g('shoer',P.shoer)+
+      '<g class="p-body">'+g('torso',P.torso)+g('card',P.card)+g('arml',P.arml)+g('armr',P.armr)+
+      '<g class="p-headwrap">'+g('head',P.head)+g('eyes-o',P.eyesO)+g('eyes-c',P.eyesC)+'</g>'+
+      g('prop',P.prop)+g('cup',P.cup)+
+      '<g class="p-badge'+badgeOn+'">'+(P.badge.length?paths(P.badge):'')+'</g>'+
+      '</g></svg>';
+  }
+
+  /* ══ 圆形头像 36 / 24（内容 r=16 / r=10，环 2px 压边缘） ══ */
+  function avHair(style,S){
+    // S = 缩放上下文：{x,y,w} 头框
+    var x=S.x, y=S.y, w=S.w;
+    switch(style){
+      case 'side':  return [R(x,y-3,w,3,HA),R(x-1,y,1,3,HA),R(x+w,y,1,2,HA),R(x,y,Math.round(w*0.34),1,HA)];
+      case 'messy': return [R(x,y-4,w,3,HA),R(x+1,y-5,2,1,HA),R(x+Math.round(w*0.45),y-5,2,1,HA),R(x+w-3,y-4,2,1,HA),R(x,y,1,2,HA),R(x+w-1,y,1,2,HA)];
+      case 'short': return [R(x+1,y-3,w-2,3,HA),R(x-1,y-1,1,2,HA),R(x+w,y-1,1,2,HA)];
+      case 'bun':   return [R(x,y-3,w,3,HA),R(x+Math.round(w*0.32),y-5,4,2,HA)];
+      case 'wild':  return [R(x-1,y-4,w+2,4,HA),R(x-2,y-1,1,4,HA),R(x+w+1,y-1,1,4,HA)];
+      case 'long':  return [R(x,y-3,w,3,HA),R(x-2,y,2,10,HA),R(x+w,y,2,10,HA),R(x,y,w,1,HA)];
+      case 'cap':   return [R(x,y-4,w,3,PA),R(x-2,y-1,3,1,AC),R(x,y,1,2,HA),R(x+w-1,y,1,2,HA)];
+      case 'pony':  return [R(x,y-3,w,3,HA),R(x+w,y-1,2,6,HA),R(x,y,2,1,HA),R(x+w-3,y,3,1,HA)];
+    }
+    return [R(x,y-3,w,3,HA)];
+  }
+
+  function avatar36(def){
+    var cx=18, cy=18, r=16;
+    var hairR=avHair(def.style,{x:10,y:8,w:16});
+    var head=[R(10,8,16,16,SK),R(9,14,1,3,SK),R(26,14,1,3,SK),R(10,8,1,16,lit(SK,14))].concat(hairR);
+    var sh=[R(3,26,30,9,SH),R(3,26,1,9,lit(SH,16)),R(32,26,1,9,dim(SH,26)),R(16,23,4,3,SK),R(15,26,6,1,SK2)];
+    if(def.id==='researcher') sh.push(R(8,26,3,9,WH),R(25,26,3,9,WH));
+    if(def.id==='ops') sh.push(R(11,28,14,7,PA),R(11,26,3,3,PA),R(22,26,3,3,PA));
+    var eyes=[R(12,14,3,3,INK),R(21,14,3,3,INK)];
+    var mouth=[R(16,20,4,1,SK2)];
+    var blush=[R(10,18,2,1,'color-mix(in srgb,#f2799b 55%,transparent)'),R(24,18,2,1,'color-mix(in srgb,#f2799b 55%,transparent)')];
+    var all=head.concat(sh,eyes,mouth,blush);
+    var style='--c-hair:var('+def.hair+');--c-shirt:var('+def.shirt+');--c-pants:var('+def.pants+');--c-accent:var('+def.accent+')';
+    return '<svg viewBox="0 0 36 36" width="36" height="36" shape-rendering="crispEdges" aria-hidden="true" style="'+style+'">'+
+      '<defs><clipPath id="c36"><circle cx="18" cy="18" r="16"/></clipPath></defs>'+
+      '<g clip-path="url(#c36)">'+paths(outline(all,36,36))+paths(sh)+paths(head)+paths(eyes)+paths(mouth)+paths(blush)+'</g></svg>';
+  }
+
+  function avatar24(def){
+    var hairR=avHair(def.style,{x:7,y:7,w:10});
+    var head=[R(7,7,10,10,SK),R(6,10,1,2,SK),R(17,10,1,2,SK),R(7,7,1,10,lit(SK,14))].concat(hairR);
+    var sh=[R(2,17,20,7,SH),R(2,17,1,7,lit(SH,16)),R(21,17,1,7,dim(SH,26)),R(11,15,2,2,SK),R(10,17,4,1,SK2)];
+    if(def.id==='researcher') sh.push(R(5,17,2,7,WH),R(17,17,2,7,WH));
+    if(def.id==='ops') sh.push(R(8,18,8,5,PA),R(8,17,2,2,PA),R(14,17,2,2,PA));
+    var eyes=[R(8,10,2,2,INK),R(14,10,2,2,INK)];
+    var all=head.concat(sh,eyes);
+    var style='--c-hair:var('+def.hair+');--c-shirt:var('+def.shirt+');--c-pants:var('+def.pants+');--c-accent:var('+def.accent+')';
+    return '<svg viewBox="0 0 24 24" width="24" height="24" shape-rendering="crispEdges" aria-hidden="true" style="'+style+'">'+
+      '<defs><clipPath id="c24-'+def.id+'"><circle cx="12" cy="12" r="10"/></clipPath></defs>'+
+      '<g clip-path="url(#c24-'+def.id+')">'+paths(outline(all,24,24))+paths(sh)+paths(head)+paths(eyes)+'</g></svg>';
+  }
+
+  /* ── 数据 ───────────────────────────────────────────────── */
+  var SEATS=[
+    {row:1,side:'left',  id:'frontend',  state:'working',      action:null},
+    {row:2,side:'right', id:'pm',        state:'waiting',      action:null},
+    {row:3,side:'left',  id:'reviewer',  state:'idle',         action:null},
+    {row:4,side:'right', id:'backend',   state:'error',        action:'coffee'},
+    {row:5,side:'left',  id:'researcher',state:'done',         action:null},
+    {row:6,side:'right', id:'designer',  state:'provisioning', action:'stretch'},
+    {row:7,side:'left',  id:'ops',       state:'failed',       action:null},
+    {row:8,side:'right', id:'writer',    state:'working',      action:null}
+  ];
+  var STATE_LABEL={idle:'待命',working:'干活中',waiting:'等你回复',done:'有新结果',
+                   error:'异常结束',failed:'入职失败',provisioning:'入职中'};
+  var STATE_VAR={idle:'idle',working:'biz',waiting:'warn',done:'ok',error:'err',failed:'err',provisioning:'biz'};
+
+  function poseFor(st){
+    var p={state:st};
+    if(st==='working') p.arms='type';
+    else if(st==='waiting') p.arms='wave';
+    else if(st==='done') p.arms='up';
+    else if(st==='error') p.eyes='x';
+    else if(st==='failed'){ p.eyes='shut'; p.ghost=true; }
+    else if(st==='provisioning'){ p.dots=true; p.eyes='shut'; }
+    return p;
+  }
+
+  function monitorSvg(){
+    var r=[];
+    r.push(R(1,2,32,26,'color-mix(in srgb,var(--px-blue) 10%,transparent)'));
+    r.push(R(2,2,30,20,'var(--mon-bezel)'));
+    r.push(R(2,2,30,1,lit('var(--mon-bezel)',18)));
+    r.push(R(4,4,26,16,'var(--mon-screen)'));
+    r.push(R(5,6,12,1,'var(--px-blue)'));
+    r.push(R(5,8,7,1,'color-mix(in srgb,var(--px-blue) 55%,var(--mon-screen))'));
+    r.push(R(15,22,4,9,'var(--mon-bezel)'));
+    r.push(R(9,31,16,2,'var(--mon-bezel)'));
+    r.push(R(9,31,16,1,lit('var(--mon-bezel)',14)));
+    return '<svg viewBox="0 0 34 34" width="34" height="34" shape-rendering="crispEdges" aria-hidden="true" style="display:block">'+paths(r)+'</svg>';
+  }
+
+  /* ── 走廊 ───────────────────────────────────────────────── */
+  var corridor=document.getElementById('corridor');
+  var html='<div class="aisle-band"></div>';
+  for(var row=1;row<=8;row++){
+    var s=SEATS[row-1], c=BY_ID[s.id];
+    html+='<div class="floor">';
+    html+='<div class="seat" data-side="'+s.side+'" data-state="'+s.state+'" data-member="'+s.id+'"'+
+      (s.action?' data-action="'+s.action+'"':'')+
+      ' style="--st:var(--px-st-'+STATE_VAR[s.state]+')" tabindex="0" role="button"'+
+      ' aria-label="'+c.name+' '+c.role+' '+STATE_LABEL[s.state]+'">';
+    html+='<div class="chair"></div>';
+    if(s.action){
+      html+='<div class="mascot"><div class="pose base">'+sprite(c,poseFor(s.state))+'</div>'+
+            '<div class="pose act">'+sprite(c,s.action==='coffee'?{arms:'coffee',state:s.state}:{arms:'up',state:s.state})+'</div></div>';
+    }else{
+      html+='<div class="mascot">'+(s.id==='frontend'?'':sprite(c,poseFor(s.state)))+'</div>';
+    }
+    html+='<div class="monitor">'+monitorSvg()+'</div>';
+    html+='<div class="desk-top"></div><div class="desk-front"></div>';
+    html+='<div class="plate"><span class="dot"></span><b>'+c.name+'</b><span class="sp"></span><i>'+STATE_LABEL[s.state]+'</i></div>';
+    html+='</div>';
+    html+='<div class="aisle" style="grid-column:2;grid-row:1"></div>';
+    html+='</div>';
+  }
+  html+='<div class="strip">'+
+    '<div class="prop-plant">'+
+      '<svg viewBox="0 0 18 24" width="18" height="24" shape-rendering="crispEdges">'+paths([
+        R(2,14,14,10,'var(--rm-pot)'), R(1,14,16,3,dim('var(--rm-pot)',28)), R(2,22,14,2,dim('var(--rm-pot)',28)),
+        R(8,4,2,11,'var(--rm-leaf2)'),
+        R(2,8,6,4,'var(--rm-leaf)'), R(10,6,6,4,'var(--rm-leaf)'),
+        R(4,1,5,5,'var(--rm-leaf2)'), R(10,2,5,4,'var(--rm-leaf)'), R(6,0,3,3,'var(--rm-leaf2)')
+      ])+'</svg></div>'+
+    '<div class="prop-cat">'+
+      '<svg viewBox="0 0 22 12" width="44" height="24" shape-rendering="crispEdges">'+paths([
+        R(0,5,16,7,'var(--rm-cat)'), R(0,5,16,1,lit('var(--rm-cat)',20)),
+        R(3,7,2,1,'var(--rm-cat2)'), R(7,7,2,1,'var(--rm-cat2)'),
+        R(12,1,10,7,'var(--rm-cat)'), R(12,1,10,1,lit('var(--rm-cat)',20)),
+        R(13,0,2,2,'var(--rm-cat)'), R(19,0,2,2,'var(--rm-cat)'),
+        R(14,4,2,1,'var(--px-ink)'), R(18,4,2,1,'var(--px-ink)'), R(16,6,1,1,'var(--px-ink)'),
+        R(0,10,14,2,'var(--rm-cat2)'), R(15,8,7,2,'var(--rm-cat2)'), R(20,5,2,4,'var(--rm-cat2)')
+      ])+'</svg></div>'+
+    '</div>';
+
+  var walker=BY_ID.frontend, guest=BY_ID.reviewer;
+  html+='<div class="actor walker">'+
+    '<div class="pose walking" data-p="idle">'+sprite(walker,{state:'working'})+'</div>'+
+    '<div class="pose walking" data-p="walk">'+sprite(walker,{legs:'A',arms:'swingA'})+'</div>'+
+    '<div class="pose" data-p="give">'+sprite(walker,{arms:'take',card:'take',face:'left'})+'</div>'+
+    '<div class="pose" data-p="giveE">'+sprite(walker,{arms:'take',face:'left'})+'</div>'+
+    '</div>';
+  html+='<div class="actor guest">'+
+    '<div class="pose" data-p="idle">'+sprite(guest,{face:'right'})+'</div>'+
+    '<div class="pose" data-p="take">'+sprite(guest,{arms:'give',face:'right'})+'</div>'+
+    '<div class="pose" data-p="catch">'+sprite(guest,{arms:'give',card:'give',face:'right'})+'</div>'+
+    '<div class="pose" data-p="nod">'+sprite(guest,{arms:'give',card:'give',face:'right',headDy:1})+'</div>'+
+    '</div>';
+  html+='<div class="card-fly"><i class="c-flat">'+cardSvgInline('flat')+'</i><i class="c-stand">'+cardSvgInline('stand')+'</i></div>';
+  corridor.innerHTML=html;
+
+  function cardSvgInline(kind){
+    var w=kind==='flat'?8:6, h=kind==='flat'?3:8;
+    return '<svg class="px" viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" shape-rendering="crispEdges">'+paths(cardRects(kind))+'</svg>';
+  }
+
+  /* 紧凑列表：36 圆 + 24 圆 */
+  document.getElementById('compact').innerHTML=SEATS.map(function(s){
+    var c=BY_ID[s.id];
+    return '<div class="crow" style="--st:var(--px-st-'+STATE_VAR[s.state]+')">'+
+      '<div class="av av36" data-state="'+s.state+'">'+avatar36(c)+'</div>'+
+      '<b>'+c.name+'</b><i>'+c.role+' · '+STATE_LABEL[s.state]+'</i><span class="dot"></span></div>';
+  }).join('');
+  document.getElementById('compact24').innerHTML=SEATS.map(function(s){
+    var c=BY_ID[s.id];
+    return '<div class="crow" style="--st:var(--px-st-'+STATE_VAR[s.state]+');height:32px">'+
+      '<div class="av av24" data-state="'+s.state+'">'+avatar24(c)+'</div>'+
+      '<b>'+c.name+'</b><i>'+c.role+'</i><span class="dot"></span></div>';
+  }).join('');
+
+  /* 4 态环形对照（4×） */
+  var ringStates=[['idle','待命'],['working','干活中'],['waiting','等你回复'],['provisioning','入职中']];
+  document.getElementById('rings').innerHTML=ringStates.map(function(rs){
+    var c=BY_ID.frontend;
+    return '<div class="ring-cell" style="--st:var(--px-st-'+STATE_VAR[rs[0]]+')">'+
+      '<div class="av av144" data-state="'+rs[0]+'">'+
+        '<svg viewBox="0 0 36 36" width="144" height="144" shape-rendering="crispEdges" style="--c-hair:var('+c.hair+');--c-shirt:var('+c.shirt+');--c-pants:var('+c.pants+');--c-accent:var('+c.accent+')">'+
+          '<defs><clipPath id="cr-'+rs[0]+'"><circle cx="18" cy="18" r="16"/></clipPath></defs>'+
+          '<g clip-path="url(#cr-'+rs[0]+')">'+avatar36Body(c)+'</g></svg>'+
+      '</div><em>'+rs[1]+'</em></div>';
+  }).join('');
+
+  function avatar36Body(def){
+    var hairR=avHair(def.style,{x:10,y:8,w:16});
+    var head=[R(10,8,16,16,SK),R(9,14,1,3,SK),R(26,14,1,3,SK),R(10,8,1,16,lit(SK,14))].concat(hairR);
+    var sh=[R(3,26,30,9,SH),R(3,26,1,9,lit(SH,16)),R(32,26,1,9,dim(SH,26)),R(16,23,4,3,SK),R(15,26,6,1,SK2)];
+    if(def.id==='researcher') sh.push(R(8,26,3,9,WH),R(25,26,3,9,WH));
+    if(def.id==='ops') sh.push(R(11,28,14,7,PA),R(11,26,3,3,PA),R(22,26,3,3,PA));
+    var eyes=[R(12,14,3,3,INK),R(21,14,3,3,INK)];
+    var mouth=[R(16,20,4,1,SK2)];
+    var blush=[R(10,18,2,1,'color-mix(in srgb,#f2799b 55%,transparent)'),R(24,18,2,1,'color-mix(in srgb,#f2799b 55%,transparent)')];
+    var all=head.concat(sh,eyes,mouth,blush);
+    return paths(outline(all,36,36))+paths(sh)+paths(head)+paths(eyes)+paths(mouth)+paths(blush);
+  }
+
+  /* ── 18s 编舞（1 号 → 3 号 = 两行 180px） ───────────────── */
+  var sc=document.createElement('style');
+  sc.textContent=`
+  .walker{animation:wMove calc(18s / var(--speed,1)) linear infinite}
+  @keyframes wMove{
+    0%,6.67%{transform:translate(var(--desk-dx),0);animation-timing-function:steps(8,end)}
+    11.11%{transform:translate(0,0);animation-timing-function:steps(40,end)}
+    21%{transform:translate(0,160px);animation-timing-function:steps(5,end)}
+    25.56%{transform:translate(0,180px)}
+    52.22%{transform:translate(0,180px);animation-timing-function:steps(5,end)}
+    56.5%{transform:translate(0,160px);animation-timing-function:steps(40,end)}
+    66.67%{transform:translate(0,0);animation-timing-function:steps(8,end)}
+    71.11%,100%{transform:translate(var(--desk-dx),0)}
+  }
+  .walker .pose[data-p="idle"]{animation:wIdle calc(18s / var(--speed,1)) step-end infinite}
+  .walker .pose[data-p="walk"]{animation:wWalk calc(18s / var(--speed,1)) step-end infinite}
+  .walker .pose[data-p="give"]{animation:wGive calc(18s / var(--speed,1)) step-end infinite}
+  .walker .pose[data-p="giveE"]{animation:wGiveE calc(18s / var(--speed,1)) step-end infinite}
+  @keyframes wIdle{0%,6.66%{opacity:1}6.67%,9%{opacity:0}9.01%,71.1%{opacity:0}71.11%,100%{opacity:1}}
+  @keyframes wWalk{0%,6.66%{opacity:0}6.67%,25.55%{opacity:1}25.56%,52.21%{opacity:0}52.22%,71.1%{opacity:1}71.11%,100%{opacity:0}}
+  @keyframes wGive{0%,28.88%{opacity:0}28.89%,35.55%{opacity:1}35.56%,100%{opacity:0}}
+  @keyframes wGiveE{0%,35.55%{opacity:0}35.56%,47.77%{opacity:1}47.78%,100%{opacity:0}}
+
+  .guest .pose[data-p="idle"]{animation:gIdle calc(18s / var(--speed,1)) step-end infinite}
+  .guest .pose[data-p="take"]{animation:gTake calc(18s / var(--speed,1)) step-end infinite}
+  .guest .pose[data-p="catch"]{animation:gCatch calc(18s / var(--speed,1)) step-end infinite}
+  .guest .pose[data-p="nod"]{animation:gNod calc(18s / var(--speed,1)) step-end infinite}
+  @keyframes gIdle{0%,25.55%{opacity:0}25.56%,28.88%{opacity:1}28.89%,47.77%{opacity:0}47.78%,52.21%{opacity:1}52.22%,100%{opacity:0}}
+  @keyframes gTake{0%,28.88%{opacity:0}28.89%,38.32%{opacity:1}38.33%,100%{opacity:0}}
+  @keyframes gCatch{0%,38.32%{opacity:0}38.33%,39.43%{opacity:1}39.44%,100%{opacity:0}}
+  @keyframes gNod{0%,39.43%{opacity:0}39.44%,47.77%{opacity:1}47.78%,100%{opacity:0}}
+
+  .seat[data-member="reviewer"] .mascot{animation:rvAway calc(18s / var(--speed,1)) step-end infinite}
+  @keyframes rvAway{0%,25.55%{opacity:1}25.56%,52.21%{opacity:0}52.22%,100%{opacity:1}}
+
+  .card-fly{animation:cfly calc(18s / var(--speed,1)) step-end infinite}
+  .card-fly .c-flat{animation:cfFlat calc(18s / var(--speed,1)) step-end infinite}
+  .card-fly .c-stand{animation:cfStand calc(18s / var(--speed,1)) step-end infinite}
+  @keyframes cfly{0%,35.55%{transform:translateX(0)}
+    36.7%{transform:translateX(calc(var(--ho-fly) / 2))}
+    38.32%,100%{transform:translateX(var(--ho-fly))}}
+  @keyframes cfFlat{0%,35.55%{opacity:0}35.56%,36.6%{opacity:1}36.7%,100%{opacity:0}}
+  @keyframes cfStand{0%,36.6%{opacity:0}36.7%,38.32%{opacity:1}38.33%,100%{opacity:0}}`;
+  document.head.appendChild(sc);
+
+  corridor.addEventListener('click',function(e){
+    var seat=e.target.closest('.seat');
+    if(!seat) return;
+    seat.setAttribute('data-picked',seat.getAttribute('data-picked')==='true'?'false':'true');
+  });
+  corridor.addEventListener('keydown',function(e){
+    if(e.key!=='Enter'&&e.key!==' ') return;
+    var seat=e.target.closest('.seat');
+    if(!seat) return;
+    e.preventDefault();
+    seat.setAttribute('data-picked',seat.getAttribute('data-picked')==='true'?'false':'true');
+  });
+
+  var panel=document.getElementById('panel');
+  var root=document.documentElement;
+  function sync(k,v){
+    var seg=document.querySelectorAll('[data-k="'+k+'"]');
+    for(var i=0;i<seg.length;i++) seg[i].setAttribute('aria-pressed',String(seg[i].dataset.v===v));
+  }
+  document.addEventListener('click',function(e){
+    var b=e.target.closest?e.target.closest('button[data-k]'):null;
+    if(!b) return;
+    var k=b.dataset.k, v=b.dataset.v;
+    if(k==='theme') root.setAttribute('data-theme',v);
+    if(k==='width') panel.setAttribute('data-w',v);
+    if(k==='speed') document.body.style.setProperty('--speed',v);
+    sync(k,v);
+  });
+  var pb=document.getElementById('btn-pause');
+  pb.addEventListener('click',function(){
+    var on=!document.body.classList.contains('paused');
+    document.body.classList.toggle('paused',on);
+    pb.setAttribute('aria-pressed',String(on));
+    pb.textContent=on?'继续':'暂停';
+  });
+  document.body.style.setProperty('--speed','1');
+
+  var rm=window.matchMedia('(prefers-reduced-motion: reduce)');
+  var note=document.getElementById('motion-note');
+  function rmNote(){ note.textContent=rm.matches?'已检测到「减少动态」：静止在首帧':'动画全部为 CSS keyframes'; }
+  rmNote();
+  if(rm.addEventListener) rm.addEventListener('change',rmNote);
+})();
+</script>
+</body>
+</html>

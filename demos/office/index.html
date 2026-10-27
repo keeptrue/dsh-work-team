@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>员工办公室 · 三个方向</title>
+<style>
+/* 选择页：零依赖单文件。颜色走 DSH alias token，light/dark 就地模拟一份。 */
+:root{
+  color-scheme: light;
+  --dsw-alias-bg-base:#ffffff;
+  --dsw-alias-bg-layer-1:#ffffff;
+  --dsw-alias-bg-layer-2:#ffffff;
+  --dsw-alias-bg-layer-3:#ffffff;
+  --dsw-alias-border-l1:#0000000a;
+  --dsw-alias-border-l2:#0000001a;
+  --dsw-alias-label-primary:#0f1115;
+  --dsw-alias-label-secondary:#61666b;
+  --dsw-alias-label-tertiary:#81858c;
+  --dsw-alias-label-caption:#adb2b8;
+  --dsw-alias-label-primary-inverted:#ffffff;
+  --dsw-alias-brand-primary:#0f1115;
+  --dsw-alias-interactive-bg-hover:#2631480f;
+  --dsw-alias-state-idle-primary:#d4d4d4;
+  --dsw-alias-state-business-primary:#4176e6;
+  --dsw-alias-state-warn-primary:#f59e0b;
+  --dsw-alias-state-success-primary:#22c55e;
+  --dsw-alias-state-error-primary:#ec1313;
+  --dsw-specific-sidebar-fill:#f9fafb;
+  --office-ink-shade:#0000002e;
+}
+html[data-theme="dark"]{
+  color-scheme: dark;
+  --dsw-alias-bg-base:#151517;
+  --dsw-alias-bg-layer-1:#232324;
+  --dsw-alias-bg-layer-2:#2c2c2e;
+  --dsw-alias-bg-layer-3:#353638;
+  --dsw-alias-border-l1:#ffffff0f;
+  --dsw-alias-border-l2:#ffffff1f;
+  --dsw-alias-label-primary:#f9fafb;
+  --dsw-alias-label-secondary:#cfd3d6;
+  --dsw-alias-label-tertiary:#adb2b8;
+  --dsw-alias-label-caption:#81858c;
+  --dsw-alias-label-primary-inverted:#353638;
+  --dsw-alias-brand-primary:#f9fafb;
+  --dsw-alias-interactive-bg-hover:#ffffff14;
+  --dsw-alias-state-idle-primary:#545557;
+  --dsw-alias-state-business-primary:#7aaaff;
+  --dsw-alias-state-warn-primary:#f59e0b;
+  --dsw-alias-state-success-primary:#22c55e;
+  --dsw-alias-state-error-primary:#f25a5a;
+  --dsw-specific-sidebar-fill:#1b1b1c;
+  --office-ink-shade:#00000047;
+}
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ margin:0; }
+body{
+  background:var(--dsw-alias-bg-base); color:var(--dsw-alias-label-primary);
+  font:400 13px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+:focus-visible{ outline:2px solid var(--dsw-alias-brand-primary); outline-offset:2px; }
+.wrap{ max-width:980px; margin:0 auto; padding:32px 20px 56px; }
+.head{ display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; margin-bottom:4px; }
+.head h1{ margin:0; font-size:19px; line-height:1.3; font-weight:650; }
+.head p{ flex:1 1 260px; min-width:0; margin:0; font-size:12px; color:var(--dsw-alias-label-secondary); }
+.theme{
+  flex:none; height:28px; padding:0 10px; border-radius:7px; cursor:pointer;
+  border:1px solid var(--dsw-alias-border-l2); background:var(--dsw-alias-bg-layer-1);
+  color:var(--dsw-alias-label-secondary); font-size:11px;
+}
+.theme:hover{ color:var(--dsw-alias-label-primary); border-color:var(--dsw-alias-brand-primary); }
+.grid{ display:flex; flex-wrap:wrap; gap:14px; margin-top:18px; }
+.card{
+  flex:1 1 280px; min-width:0; display:flex; flex-direction:column; gap:10px;
+  padding:14px; border-radius:12px; text-decoration:none; color:inherit;
+  border:1px solid var(--dsw-alias-border-l2); background:var(--dsw-alias-bg-layer-1);
+}
+a.card:hover{ border-color:var(--dsw-alias-brand-primary); }
+.card-top{ display:flex; align-items:baseline; gap:8px; min-width:0; }
+.card-top b{ font-size:14px; font-weight:650; }
+.card-top span{ font-size:11px; color:var(--dsw-alias-label-tertiary); }
+.thumb{
+  width:100%; height:132px; border-radius:9px; overflow:hidden;
+  border:1px solid var(--dsw-alias-border-l1); background:var(--dsw-specific-sidebar-fill);
+}
+.card p{ margin:0; font-size:12px; color:var(--dsw-alias-label-secondary); }
+.tags{ display:flex; flex-wrap:wrap; gap:5px; }
+.tag{
+  font-size:10.5px; line-height:18px; padding:0 6px; border-radius:5px;
+  border:1px solid var(--dsw-alias-border-l1); color:var(--dsw-alias-label-tertiary);
+}
+.cta{ margin-top:auto; font-size:12px; font-weight:600; color:var(--dsw-alias-state-business-primary); }
+.is-todo{ opacity:.62; }
+.is-todo .cta{ color:var(--dsw-alias-label-tertiary); font-weight:400; }
+.note{ margin-top:22px; font-size:11.5px; color:var(--dsw-alias-label-tertiary); }
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{ animation:none !important; transition:none !important; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>员工办公室 · 三个方向</h1>
+    <p>只做 demo，未动正式代码。三个都是 300/380px 的真实右栏尺度，可切主题、可暂停自动演示。</p>
+    <button class="theme" id="themeBtn" type="button" aria-label="切换浅色或深色主题" aria-pressed="false">深色</button>
+  </div>
+
+  <div class="grid">
+    <a class="card" href="a.html" data-states="idle working waiting done error provisioning">
+      <div class="card-top"><b>A · 后脑勺视角</b><span>俯视网格</span></div>
+      <div class="thumb">
+        <svg viewBox="0 0 240 132" width="100%" height="132" role="img" aria-label="方案 A 缩略：两列工位，中间过道">
+          <rect x="0" y="0" width="240" height="132" fill="var(--dsw-specific-sidebar-fill)"/>
+          <line x1="120" y1="6" x2="120" y2="126" stroke="var(--dsw-alias-border-l2)" stroke-dasharray="3 5"/>
+          <g fill="var(--dsw-alias-bg-layer-3)" stroke="var(--dsw-alias-border-l2)">
+            <rect x="38" y="14" width="52" height="24" rx="3"/><rect x="150" y="14" width="52" height="24" rx="3"/>
+            <rect x="38" y="72" width="52" height="24" rx="3"/><rect x="150" y="72" width="52" height="24" rx="3"/>
+          </g>
+          <g fill="var(--dsw-alias-label-primary)" opacity=".85">
+            <circle cx="64" cy="44" r="9"/><circle cx="176" cy="44" r="9"/>
+            <circle cx="64" cy="102" r="9"/><circle cx="176" cy="102" r="9"/>
+          </g>
+          <g fill="var(--dsw-alias-state-business-primary)" opacity=".45">
+            <rect x="52" y="50" width="24" height="11" rx="5"/><rect x="164" y="50" width="24" height="11" rx="5"/>
+            <rect x="52" y="108" width="24" height="11" rx="5"/>
+          </g>
+          <rect x="164" y="108" width="24" height="11" rx="5" fill="var(--dsw-alias-state-warn-primary)" opacity=".5"/>
+        </svg>
+      </div>
+      <p>两列工位，中间一条过道。谁在干活，显示器就在谁那儿亮。</p>
+      <div class="tags"><span class="tag">7 工位</span><span class="tag">七态</span><span class="tag">1600ms 交接</span></div>
+      <span class="cta">打开 A →</span>
+    </a>
+
+    <a class="card" href="b.html" data-states="idle working waiting done error provisioning">
+      <div class="card-top"><b>B · 纵向走廊</b><span>左右交替</span></div>
+      <div class="thumb">
+        <svg viewBox="0 0 240 132" width="100%" height="132" role="img" aria-label="方案 B 缩略：纵向走廊，工位左右交替">
+          <rect x="0" y="0" width="240" height="132" fill="var(--dsw-specific-sidebar-fill)"/>
+          <rect x="103" y="0" width="34" height="132" fill="var(--dsw-alias-interactive-bg-hover)"/>
+          <line x1="120" y1="0" x2="120" y2="132" stroke="var(--dsw-alias-border-l2)" stroke-dasharray="3 5"/>
+          <g fill="var(--dsw-alias-bg-layer-3)" stroke="var(--dsw-alias-border-l2)">
+            <rect x="42" y="10" width="42" height="18" rx="3"/><rect x="156" y="10" width="42" height="18" rx="3"/>
+            <rect x="42" y="62" width="42" height="18" rx="3"/><rect x="156" y="62" width="42" height="18" rx="3"/>
+            <rect x="42" y="108" width="42" height="18" rx="3"/>
+          </g>
+          <g fill="var(--dsw-alias-label-primary)" opacity=".85">
+            <circle cx="96" cy="20" r="7"/><circle cx="146" cy="20" r="7"/>
+            <circle cx="96" cy="72" r="7"/><circle cx="146" cy="72" r="7"/>
+            <circle cx="96" cy="118" r="7"/>
+          </g>
+          <circle cx="120" cy="72" r="5" fill="var(--dsw-alias-state-business-primary)"/>
+        </svg>
+      </div>
+      <p>一条走廊通到底，工位左右交替挂着，交接要纵向穿过好几排 —— 走动感最强。</p>
+      <div class="tags"><span class="tag">纵向走廊</span><span class="tag">左右交替</span><span class="tag">长距离交接</span></div>
+      <span class="cta">打开 B →</span>
+    </a>
+
+    <a class="card" href="c.html" data-states="idle working waiting done error provisioning">
+      <div class="card-top"><b>C · 等距小房间</b><span>30° 斜视</span></div>
+      <div class="thumb">
+        <svg viewBox="0 0 240 132" width="100%" height="132" role="img" aria-label="方案 C 缩略：菱形地板上的等距工位">
+          <rect x="0" y="0" width="240" height="132" fill="var(--dsw-specific-sidebar-fill)"/>
+          <path d="M120 12 224 66 120 120 16 66Z" fill="var(--dsw-alias-interactive-bg-hover)" stroke="var(--dsw-alias-border-l2)"/>
+          <g fill="var(--dsw-alias-label-primary)" opacity=".8">
+            <circle cx="72" cy="52" r="7"/><circle cx="110" cy="40" r="7"/><circle cx="150" cy="58" r="7"/>
+            <circle cx="96" cy="80" r="7"/><circle cx="136" cy="92" r="7"/><circle cx="176" cy="76" r="7"/>
+          </g>
+          <g fill="var(--dsw-alias-bg-layer-3)" stroke="var(--dsw-alias-border-l2)">
+            <rect x="60" y="38" width="26" height="9" rx="2"/><rect x="98" y="26" width="26" height="9" rx="2"/>
+            <rect x="138" y="44" width="26" height="9" rx="2"/><rect x="84" y="66" width="26" height="9" rx="2"/>
+          </g>
+          <circle cx="120" cy="66" r="4" fill="var(--dsw-alias-state-business-primary)"/>
+        </svg>
+      </div>
+      <p>菱形地板 + 30° 斜视，七个工位像真摆在一间房里；交接是斜着穿过去。</p>
+      <div class="tags"><span class="tag">等距投影</span><span class="tag">斜向交接</span><span class="tag">一屏看全屋</span></div>
+      <span class="cta">打开 C →</span>
+    </a>
+  </div>
+
+  <p class="note">三个 demo 都是单文件、零依赖、双击即开；吉祥物与屏幕几何来自 spec/mascot.svg · desk.svg。宽度用 300/380 切换，看的是真实右栏尺度。</p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var btn = document.getElementById('themeBtn');
+  btn.addEventListener('click', function () {
+    var dark = document.documentElement.getAttribute('data-theme') !== 'dark';
+    if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+    else document.documentElement.removeAttribute('data-theme');
+    btn.setAttribute('aria-pressed', String(dark));
+    btn.textContent = dark ? '浅色' : '深色';
+  });
+})();
+</script>
+</body>
+</html>

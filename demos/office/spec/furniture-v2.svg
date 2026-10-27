@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  员工办公室 · 工位单元 furniture-v2.1  —  designer / 2026-10-26
+  尺寸口径已由 lead 拍定：行高 78 / 角色 50×56 / 显示器 30×22 / 切 8 / 压 2 / 尾 9。
+  这套数字是最终版，前端照单执行。
+
+  ── 图层契约（照这个顺序拼，别整块塞）────────────────────────────────────
+      z0  #u-floor      地面线 + 接触阴影
+      z1  #u-chair      椅背（角色身后，只露两侧圆弧）
+      z2  #u-monitor    外框 / 屏幕 / 支架 / 底座 / 落地阴影（全在 30×22 里）
+      z3  #u-spill      屏幕光溢出（桌面上的那滩光）
+      z4  角色          50×56，body 与 head 各自一个 group
+      z5  #u-deskfront  桌面 + 2px 前沿线  ← 压在角色身上 8px
+      z6  角色的 #paws  两只爪子压在桌沿上 2px（在桌面之上）
+      z7  #u-props      便签 + 杯子
+
+  为什么 z5 和 z6 分两层：桌面切掉角色下腹 8px 是「坐在桌前」，
+  爪子压在桌沿 2px 是「手放在桌上」。两件事方向相反，必须分两刀。
+
+  ── 三套变体 ────────────────────────────────────────────────────────────
+  S1 平面：实色 + 1px 线，只有光是渐变。
+  S2 软陶：桌面/显示器渐变 + 顶部高光弧 + 底部环境阴影。
+  S3 线描：每件家具 1px 墨线勾边 + 暖纸色填充。
+  颜色一律走 f-* 自定义属性 —— **CSS class 选择器进不了 use 元素的 shadow
+  tree**，这是上一版所有家具变黑的根因。自定义属性会继承进去，才有效。
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 336 428" width="336" height="428"
+     font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace">
+
+  <title>furniture-v2.1 · 工位单元 104×78 · 三套语言</title>
+
+  <defs>
+    <style>
+      svg{
+        --dsw-alias-bg-base:#f6f7f9;--dsw-alias-bg-layer-1:#ffffff;--dsw-alias-bg-layer-2:#f0f2f5;
+        --dsw-alias-border-l1:#e2e5ea;--dsw-alias-border-l2:#cfd4dc;
+        --dsw-alias-label-primary:#1c2026;--dsw-alias-label-secondary:#6b7280;
+        --dsw-alias-label-tertiary:#9aa1ac;
+        --dsw-alias-state-business-primary:#4176e6;--dsw-alias-state-warn-primary:#f59e0b;
+        --dsw-alias-state-success-primary:#22c55e;--dsw-alias-state-error-primary:#ec1313;
+        --wt-ink:#191d24;--wt-ink-panel:#242830;--wt-ink-screen:#0c0f14;--wt-paper:#eef1f5;
+        --wt-state:var(--dsw-alias-state-business-primary);
+        --wt-light:color-mix(in srgb,var(--wt-state) 78%,var(--wt-paper));
+      }
+      .h1{font-size:10px;font-weight:700;fill:var(--dsw-alias-label-primary)}
+      .h2{font-size:8px;fill:var(--dsw-alias-label-secondary)}
+      .lbl{font-size:7.5px;fill:var(--dsw-alias-label-secondary)}
+      .dim{font-size:6.5px;fill:var(--dsw-alias-label-tertiary)}
+      .guide{fill:none;stroke:var(--dsw-alias-border-l2);stroke-width:.5;stroke-dasharray:1.5 2}
+    </style>
+
+    <linearGradient id="gDesk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--wt-paper)" stop-opacity=".95"/>
+      <stop offset="1" stop-color="var(--wt-paper)" stop-opacity=".55"/>
+    </linearGradient>
+    <linearGradient id="gBezel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2e343e"/>
+      <stop offset="1" stop-color="#181c22"/>
+    </linearGradient>
+    <linearGradient id="gChair" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="color-mix(in srgb,var(--wt-paper) 60%,transparent)"/>
+      <stop offset="1" stop-color="color-mix(in srgb,var(--wt-paper) 16%,transparent)"/>
+    </linearGradient>
+    <radialGradient id="gSpill" cx=".5" cy=".25" r=".8">
+      <stop offset="0" stop-color="var(--wt-light)" stop-opacity=".55"/>
+      <stop offset="1" stop-color="var(--wt-light)" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft6" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+
+    <!-- ══ geometry, once. 104 x 56 (the scene box inside a 78px row) ═════ -->
+    <g id="u-floor">
+      <ellipse fill="var(--f-sh)" opacity="var(--f-sh-o)" cx="52" cy="53.4" rx="44" ry="3" filter="url(#soft6)"/>
+      <path d="M4 55H100" fill="none" stroke="var(--f-fl)" stroke-width="1"/>
+    </g>
+
+    <g id="u-chair">
+      <path fill="var(--f-ch)" stroke="var(--f-ch-s)" stroke-width=".9"
+            d="M45 50V38q0-6 10-6h44q10 0 10 6v12q-10-8-32-8t-32 8z"/>
+    </g>
+
+    <!-- 显示器 30 x 22：外框 30x16 + 支架 3.6 + 底座 2.4，全在 22 里 -->
+    <g id="u-monitor">
+      <rect fill="var(--f-bz)" stroke="var(--f-bz-s)" stroke-width=".9"
+            x="7" y="26" width="30" height="16" rx="2.4"/>
+      <rect fill="var(--f-sc)" x="9.4" y="28.4" width="25.2" height="11.2" rx="1.4"/>
+      <g class="scr-lines">
+        <rect x="11.6" y="30.6" width="12" height="1.4" rx=".7" fill="var(--wt-state)" opacity=".9"/>
+        <rect x="11.6" y="33.4" width="7.6" height="1.4" rx=".7" fill="var(--wt-state)" opacity=".6"/>
+        <rect x="11.6" y="36.2" width="15" height="1.4" rx=".7" fill="var(--wt-state)" opacity=".9"/>
+        <rect x="27.8" y="35.6" width="1.4" height="2.6" rx=".7" fill="var(--wt-state)"/>
+      </g>
+      <rect fill="var(--f-st)" stroke="var(--f-st-s)" stroke-width=".9" x="20.4" y="42" width="3.2" height="3.8" rx=".6"/>
+      <rect fill="var(--f-st)" stroke="var(--f-st-s)" stroke-width=".9" x="15.6" y="45.8" width="12.8" height="2.2" rx="1.1"/>
+      <ellipse fill="var(--f-sh)" opacity="var(--f-sh-o)" cx="22" cy="48.2" rx="8" ry="1.1"/>
+    </g>
+
+    <g id="u-spill">
+      <ellipse fill="var(--f-sp)" opacity=".26" cx="22" cy="49.6" rx="15" ry="3.4"/>
+      <ellipse fill="url(#gSpill)" cx="22" cy="49" rx="20" ry="5.2"/>
+    </g>
+
+    <!-- 桌面 y48..56；前沿线 2px 在 y48（这一刀切掉角色下腹 8px） -->
+    <g id="u-deskfront">
+      <rect fill="var(--f-dk)" stroke="var(--f-dk-s)" stroke-width=".9" x="0" y="48" width="104" height="8" rx="1"/>
+      <rect fill="var(--f-de)" x="0" y="48" width="104" height="2"/>
+    </g>
+
+    <g id="u-props">
+      <path fill="var(--f-mg)" stroke="var(--f-mg-s)" stroke-width=".8"
+            d="M38.4 41.4h5.4v5a2.4 2.4 0 0 1-2.4 2.4h-.6a2.4 2.4 0 0 1-2.4-2.4z"/>
+      <path d="M43.8 43.2h1.4a1.6 1.6 0 0 1 0 3.2h-1.4" fill="none" stroke="var(--f-mg-s)" stroke-width="1"/>
+      <g transform="rotate(-7 33 22)">
+        <rect fill="var(--f-nt)" stroke="var(--f-nt-s)" stroke-width=".8"
+              x="29.2" y="17.4" width="8.4" height="8.4" rx="1"/>
+        <path d="M31 20.2h4.8M31 22.4h3.2" stroke="var(--wt-ink)" stroke-width=".7" opacity=".35"/>
+      </g>
+    </g>
+
+    <g id="u-props-wide">
+      <path fill="var(--f-pl)" d="M100 40q3.4-4 1.6-8.4 3.6 2 4.4 6.4 2.4-2.6 5.6-2.4-2.4 4.4-7.2 5.2 2.4 1.6 3 4.4-4.6-.4-7-4z"/>
+      <path fill="var(--f-pt)" stroke="var(--f-pt-s)" stroke-width=".9" d="M99.4 47.6h9.2l-1 4.2h-7.2z"/>
+    </g>
+
+    <g id="demo-mascot"><g style="--wt-accent:palet;--wt-state:var(--dsw-alias-state-business-primary)"><g data-part="body" transform="rotate(0 32 64) "><g fill="#191d24"><path d="M17 58C7.6 58.4 2.6 51 5.8 44.4C7.4 41.2 11.6 41.2 13.2 43.8C10 45 9.2 48.4 11.2 51C13 53.4 15.2 55.2 17 58Z"/><path d="M18.6 49.4q-4.6 3-5 8.4l-.4 6.6h10.2l-.4-6.4q-.4-5.6-4.4-8.6z"/><path d="M45.4 49.4q4.6 3 5 8.4l.4 6.6H40.6l.4-6.4q.4-5.6 4.4-8.6z"/><path d="M15.5 63V52.4q0-5.4 4-8.4 4.2-3.2 8.8-4.2h7.4q4.6 1 8.8 4.2 4 3 4 8.4V63z"/></g><g fill="url(#gLight)" opacity=".55"><path d="M17 58C7.6 58.4 2.6 51 5.8 44.4C7.4 41.2 11.6 41.2 13.2 43.8C10 45 9.2 48.4 11.2 51C13 53.4 15.2 55.2 17 58Z"/><path d="M18.6 49.4q-4.6 3-5 8.4l-.4 6.6h10.2l-.4-6.4q-.4-5.6-4.4-8.6z"/><path d="M45.4 49.4q4.6 3 5 8.4l.4 6.6H40.6l.4-6.4q.4-5.6 4.4-8.6z"/><path d="M15.5 63V52.4q0-5.4 4-8.4 4.2-3.2 8.8-4.2h7.4q4.6 1 8.8 4.2 4 3 4 8.4V63z"/></g><g clip-path="url(#cpLeft)" fill="none" stroke="#ffffff" stroke-width=".85" opacity=".26" stroke-linejoin="round"><path d="M17 58C7.6 58.4 2.6 51 5.8 44.4C7.4 41.2 11.6 41.2 13.2 43.8C10 45 9.2 48.4 11.2 51C13 53.4 15.2 55.2 17 58Z"/><path d="M18.6 49.4q-4.6 3-5 8.4l-.4 6.6h10.2l-.4-6.4q-.4-5.6-4.4-8.6z"/><path d="M45.4 49.4q4.6 3 5 8.4l.4 6.6H40.6l.4-6.4q.4-5.6 4.4-8.6z"/><path d="M15.5 63V52.4q0-5.4 4-8.4 4.2-3.2 8.8-4.2h7.4q4.6 1 8.8 4.2 4 3 4 8.4V63z"/></g></g><g data-part="head" transform="rotate(0 32 44) "><g fill="#191d24"><g transform="rotate(0 26 22)"><path d="M19.8 22.2Q18.2 14.6 20.4 11.8Q23.6 10.8 26.4 13.2Q27.6 16.2 27.8 20.8Z"/></g><g transform="rotate(0 26 22)"><path d="M19.8 22.2Q18.2 14.6 20.4 11.8Q23.6 10.8 26.4 13.2Q27.6 16.2 27.8 20.8Z"/></g><path d="M32 11.4c9.6 0 16.6 6.9 16.6 15.6 0 8.9-6.9 15.8-16.6 15.8s-16.6-6.9-16.6-15.8c0-8.7 7-15.6 16.6-15.6z" transform="translate(32 27) scale(1.07) translate(-32 -27)"/><path d="M15.6 27.4q-3.6 1.8-3.2 5.8 2.2.9 3.6-.7z"/><path d="M48.4 27.4q3.6 1.8 3.2 5.8-2.2.9-3.6-.7z"/></g><g fill="url(#gLight)" opacity=".55"><g transform="rotate(0 26 22)"><path d="M19.8 22.2Q18.2 14.6 20.4 11.8Q23.6 10.8 26.4 13.2Q27.6 16.2 27.8 20.8Z"/></g><g transform="rotate(0 26 22)"><path d="M19.8 22.2Q18.2 14.6 20.4 11.8Q23.6 10.8 26.4 13.2Q27.6 16.2 27.8 20.8Z"/></g><path d="M32 11.4c9.6 0 16.6 6.9 16.6 15.6 0 8.9-6.9 15.8-16.6 15.8s-16.6-6.9-16.6-15.8c0-8.7 7-15.6 16.6-15.6z" transform="translate(32 27) scale(1.07) translate(-32 -27)"/><path d="M15.6 27.4q-3.6 1.8-3.2 5.8 2.2.9 3.6-.7z"/><path d="M48.4 27.4q3.6 1.8 3.2 5.8-2.2.9-3.6-.7z"/></g><g clip-path="url(#cpLeft)" fill="none" stroke="#ffffff" stroke-width=".85" opacity=".26" stroke-linejoin="round"><g transform="rotate(0 26 22)"><path d="M19.8 22.2Q18.2 14.6 20.4 11.8Q23.6 10.8 26.4 13.2Q27.6 16.2 27.8 20.8Z"/></g><g transform="rotate(0 26 22)"><path d="M19.8 22.2Q18.2 14.6 20.4 11.8Q23.6 10.8 26.4 13.2Q27.6 16.2 27.8 20.8Z"/></g><path d="M32 11.4c9.6 0 16.6 6.9 16.6 15.6 0 8.9-6.9 15.8-16.6 15.8s-16.6-6.9-16.6-15.8c0-8.7 7-15.6 16.6-15.6z" transform="translate(32 27) scale(1.07) translate(-32 -27)"/><path d="M15.6 27.4q-3.6 1.8-3.2 5.8 2.2.9 3.6-.7z"/><path d="M48.4 27.4q3.6 1.8 3.2 5.8-2.2.9-3.6-.7z"/></g></g><g data-part="collar"><path d="M21.6 43.6Q32 49.6 42.4 43.6L43.4 48.6Q32 54.8 20.6 48.6Z" fill="#d94f9c"/><path d="M21.6 43.6Q32 49.6 42.4 43.6" fill="none" stroke="#eef1f5" stroke-width=".9" opacity=".4"/><g fill="none" stroke="#d94f9c"><circle cx="32" cy="51.6" r="3.2" fill="none" stroke-width="2.2"/></g></g><g id="paws" fill="color-mix(in srgb,#191d24 48%,var(--wt-paper))"><rect x="14.6" y="62.4" width="11" height="7.6" rx="3.8"/><rect x="41.4" y="55.4" width="11" height="7.6" rx="3.8"/></g><g transform="rotate(-12 50 54)"><path d="M41.6 54.4c0-5.2 4-8.8 9-8.8s9 3 9 7.2c0 3-2.8 3.8-5 3.8h-2.6c-1.2 0-1.8.8-1.8 1.8 0 2.5-1.6 3.8-3.9 3.8-2.9 0-4.7-3.6-4.7-7.8z" fill="#eef1f5" stroke="#191d24" stroke-width="1"/><circle cx="47" cy="51.2" r="1.8" fill="#d94f9c"/><circle cx="53" cy="50.4" r="1.8" fill="#d94f9c" opacity=".68"/><circle cx="56.8" cy="54" r="1.8" fill="#d94f9c" opacity=".42"/></g></g></g>
+
+    <g id="u-unit">
+      <use href="#u-floor"/><use href="#u-chair"/><use href="#u-monitor"/>
+      <use href="#u-spill"/><use href="#u-deskfront"/><use href="#u-props"/>
+    </g>
+
+    <g id="u-slot"><rect x="48" y="0" width="50" height="56" fill="none"
+        stroke="var(--dsw-alias-border-l2)" stroke-width=".8" stroke-dasharray="2 2"/></g>
+  </defs>
+
+  <!-- ══ sheet ══════════════════════════════════════════════════════════ -->
+  <rect x="0" y="0" width="336" height="428" fill="var(--dsw-alias-bg-base)"/>
+  <text class="h1" x="8" y="13">furniture-v2.1 · 工位单元 104×78 · 三套语言</text>
+  <text class="h2" x="8" y="24">行高 78 / 角色 50×56 / 显示器 30×22 / 桌面切 8 / 爪子压 2 / 尾巴出椅背 9</text>
+
+  <text class="lbl" x="8" y="40">S1 平面 · 实色 + 1px 线，只有光是渐变</text>
+  <g style="--f-fl:color-mix(in srgb,var(--dsw-alias-label-primary) 13%,transparent);--f-sh:var(--wt-ink);--f-sh-o:.1;--f-ch:color-mix(in srgb,var(--dsw-alias-label-primary) 8%,transparent);--f-ch-s:color-mix(in srgb,var(--dsw-alias-label-primary) 16%,transparent);--f-bz:var(--wt-ink-panel);--f-bz-s:none;--f-sc:var(--wt-ink-screen);--f-st:var(--wt-ink-panel);--f-st-s:none;--f-dk:color-mix(in srgb,var(--dsw-alias-label-primary) 6%,transparent);--f-dk-s:color-mix(in srgb,var(--dsw-alias-label-primary) 9%,transparent);--f-de:color-mix(in srgb,var(--dsw-alias-label-primary) 7%,transparent);--f-sp:var(--wt-light);--f-mg:var(--dsw-alias-bg-layer-1);--f-mg-s:color-mix(in srgb,var(--dsw-alias-label-primary) 22%,transparent);--f-pl:color-mix(in srgb,var(--wt-state) 55%,var(--wt-ink));--f-pt:var(--wt-ink);--f-pt-s:none;--f-nt:var(--dsw-alias-bg-layer-1);--f-nt-s:color-mix(in srgb,var(--dsw-alias-label-primary) 20%,transparent)"
+     transform="translate(8 46)"><use href="#u-unit"/><use href="#u-props-wide"/><use href="#u-slot"/></g>
+  <g style="--f-fl:color-mix(in srgb,var(--dsw-alias-label-primary) 13%,transparent);--f-sh:var(--wt-ink);--f-sh-o:.1;--f-ch:color-mix(in srgb,var(--dsw-alias-label-primary) 8%,transparent);--f-ch-s:color-mix(in srgb,var(--dsw-alias-label-primary) 16%,transparent);--f-bz:var(--wt-ink-panel);--f-bz-s:none;--f-sc:var(--wt-ink-screen);--f-st:var(--wt-ink-panel);--f-st-s:none;--f-dk:color-mix(in srgb,var(--dsw-alias-label-primary) 6%,transparent);--f-dk-s:color-mix(in srgb,var(--dsw-alias-label-primary) 9%,transparent);--f-de:color-mix(in srgb,var(--dsw-alias-label-primary) 7%,transparent);--f-sp:var(--wt-light);--f-mg:var(--dsw-alias-bg-layer-1);--f-mg-s:color-mix(in srgb,var(--dsw-alias-label-primary) 22%,transparent);--f-pl:color-mix(in srgb,var(--wt-state) 55%,var(--wt-ink));--f-pt:var(--wt-ink);--f-pt-s:none;--f-nt:var(--dsw-alias-bg-layer-1);--f-nt-s:color-mix(in srgb,var(--dsw-alias-label-primary) 20%,transparent)"
+     transform="translate(120 46)"><use href="#u-floor"/><use href="#u-chair"/><use href="#u-monitor"/><use href="#u-spill"/><use href="#demo-mascot" transform="translate(48 -1.8) scale(.778)"/><use href="#u-deskfront"/><use href="#u-props"/></g>
+  <text class="dim" x="8" y="112">带槽位 + 宽栏绿植</text>
+  <text class="dim" x="120" y="112">完整场景（角色插在 spill 与 deskfront 之间）</text>
+  <path class="guide" d="M8 118H328"/>
+
+  <text class="lbl" x="8" y="132">S2 软陶 · 渐变 + 顶部高光弧 + 底部环境阴影</text>
+  <g style="--f-fl:color-mix(in srgb,var(--dsw-alias-label-primary) 10%,transparent);--f-sh:var(--wt-ink);--f-sh-o:.13;--f-ch:url(#gChair);--f-ch-s:none;--f-bz:url(#gBezel);--f-bz-s:none;--f-sc:var(--wt-ink-screen);--f-st:url(#gBezel);--f-st-s:none;--f-dk:url(#gDesk);--f-dk-s:none;--f-de:var(--wt-paper);--f-sp:var(--wt-light);--f-mg:var(--dsw-alias-bg-layer-1);--f-mg-s:none;--f-pl:color-mix(in srgb,var(--wt-state) 62%,var(--wt-ink));--f-pt:var(--wt-ink);--f-pt-s:none;--f-nt:var(--dsw-alias-bg-layer-1);--f-nt-s:none"
+     transform="translate(8 138)"><use href="#u-unit"/></g>
+  <g style="--f-fl:color-mix(in srgb,var(--dsw-alias-label-primary) 10%,transparent);--f-sh:var(--wt-ink);--f-sh-o:.13;--f-ch:url(#gChair);--f-ch-s:none;--f-bz:url(#gBezel);--f-bz-s:none;--f-sc:var(--wt-ink-screen);--f-st:url(#gBezel);--f-st-s:none;--f-dk:url(#gDesk);--f-dk-s:none;--f-de:var(--wt-paper);--f-sp:var(--wt-light);--f-mg:var(--dsw-alias-bg-layer-1);--f-mg-s:none;--f-pl:color-mix(in srgb,var(--wt-state) 62%,var(--wt-ink));--f-pt:var(--wt-ink);--f-pt-s:none;--f-nt:var(--dsw-alias-bg-layer-1);--f-nt-s:none"
+     transform="translate(120 138)"><use href="#u-floor"/><use href="#u-chair"/><use href="#u-monitor"/><use href="#u-spill"/><use href="#demo-mascot" transform="translate(48 -1.8) scale(.778)"/><use href="#u-deskfront"/><use href="#u-props"/></g>
+  <path class="guide" d="M8 200H328"/>
+
+  <text class="lbl" x="8" y="214">S3 线描淡彩 · 每件家具 1px 墨线 + 暖纸色填充</text>
+  <g style="--f-fl:var(--wt-ink);--f-sh:var(--wt-ink);--f-sh-o:.07;--f-ch:color-mix(in srgb,var(--wt-paper) 70%,transparent);--f-ch-s:var(--wt-ink);--f-bz:color-mix(in srgb,var(--wt-paper) 40%,var(--wt-ink-panel));--f-bz-s:var(--wt-ink);--f-sc:var(--wt-ink-screen);--f-st:none;--f-st-s:var(--wt-ink);--f-dk:color-mix(in srgb,var(--wt-paper) 88%,transparent);--f-dk-s:var(--wt-ink);--f-de:none;--f-sp:var(--wt-light);--f-mg:var(--wt-paper);--f-mg-s:var(--wt-ink);--f-pl:color-mix(in srgb,var(--wt-state) 45%,var(--wt-paper));--f-pt:none;--f-pt-s:var(--wt-ink);--f-nt:var(--wt-paper);--f-nt-s:var(--wt-ink)"
+     transform="translate(8 220)"><use href="#u-unit"/></g>
+  <g style="--f-fl:var(--wt-ink);--f-sh:var(--wt-ink);--f-sh-o:.07;--f-ch:color-mix(in srgb,var(--wt-paper) 70%,transparent);--f-ch-s:var(--wt-ink);--f-bz:color-mix(in srgb,var(--wt-paper) 40%,var(--wt-ink-panel));--f-bz-s:var(--wt-ink);--f-sc:var(--wt-ink-screen);--f-st:none;--f-st-s:var(--wt-ink);--f-dk:color-mix(in srgb,var(--wt-paper) 88%,transparent);--f-dk-s:var(--wt-ink);--f-de:none;--f-sp:var(--wt-light);--f-mg:var(--wt-paper);--f-mg-s:var(--wt-ink);--f-pl:color-mix(in srgb,var(--wt-state) 45%,var(--wt-paper));--f-pt:none;--f-pt-s:var(--wt-ink);--f-nt:var(--wt-paper);--f-nt-s:var(--wt-ink)"
+     transform="translate(120 220)"><use href="#u-floor"/><use href="#u-chair"/><use href="#u-monitor"/><use href="#u-spill"/><use href="#demo-mascot" transform="translate(48 -1.8) scale(.778)"/><use href="#u-deskfront"/><use href="#u-props"/></g>
+  <path class="guide" d="M8 282H328"/>
+
+  <text class="lbl" x="8" y="296">走廊节奏 · 三格并排（真实是竖排，间距由 CSS 给）</text>
+  <g style="--f-fl:color-mix(in srgb,var(--dsw-alias-label-primary) 13%,transparent);--f-sh:var(--wt-ink);--f-sh-o:.1;--f-ch:color-mix(in srgb,var(--dsw-alias-label-primary) 8%,transparent);--f-ch-s:color-mix(in srgb,var(--dsw-alias-label-primary) 16%,transparent);--f-bz:var(--wt-ink-panel);--f-bz-s:none;--f-sc:var(--wt-ink-screen);--f-st:var(--wt-ink-panel);--f-st-s:none;--f-dk:color-mix(in srgb,var(--dsw-alias-label-primary) 6%,transparent);--f-dk-s:color-mix(in srgb,var(--dsw-alias-label-primary) 9%,transparent);--f-de:color-mix(in srgb,var(--dsw-alias-label-primary) 7%,transparent);--f-sp:var(--wt-light);--f-mg:var(--dsw-alias-bg-layer-1);--f-mg-s:color-mix(in srgb,var(--dsw-alias-label-primary) 22%,transparent);--f-pl:color-mix(in srgb,var(--wt-state) 55%,var(--wt-ink));--f-pt:var(--wt-ink);--f-pt-s:none;--f-nt:var(--dsw-alias-bg-layer-1);--f-nt-s:color-mix(in srgb,var(--dsw-alias-label-primary) 20%,transparent)">
+    <use href="#u-unit" transform="translate(8 302)"/>
+    <use href="#u-unit" transform="translate(116 302)"/>
+    <use href="#u-unit" transform="translate(224 302)"/>
+  </g>
+  <path class="guide" d="M8 364H328"/>
+  <text class="dim" x="8" y="380">三格之间只靠地面线 + 落地阴影分段，不画墙；走廊侧留白由 CSS 的 gap 给行距。</text>
+  <text class="dim" x="8" y="392">行高 78 → 7 工位 = 546px，加组头 28 仍在侧边栏可容纳范围内。</text>
+</svg>

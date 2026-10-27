@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>RoleAvatar 像素稿 · 验证台（真代码切片）</title>
+<style>
+/* 验证台外壳：只有页面排版 + token 取值，没有任何头像规则。
+   头像/环/动画全部来自 client.js 的真实 CSS（运行时切片注入）。 */
+:root{
+  color-scheme: light;
+  --bg:#f4f5f7; --card:#fff; --fg:#111419; --fg2:#5a616b; --fg3:#8b929b; --line:#00000014;
+  --dsw-alias-bg-base:#ffffff;
+  --dsw-alias-bg-layer-1:#ffffff;
+  --dsw-alias-bg-layer-2:#ffffff;
+  --dsw-alias-bg-layer-3:#ffffff;
+  --dsw-alias-bg-overlay:#e9ecf2;
+  --dsw-alias-border-l1:#0000000a;
+  --dsw-alias-border-l2:#0000001a;
+  --dsw-alias-label-primary:#0f1115;
+  --dsw-alias-label-secondary:#61666b;
+  --dsw-alias-label-tertiary:#81858c;
+  --dsw-alias-label-caption:#adb2b8;
+  --dsw-alias-label-primary-inverted:#ffffff;
+  --dsw-alias-brand-primary:#0f1115;
+  --dsw-alias-interactive-bg-hover:#2631480f;
+  --dsw-alias-interactive-bg-active:#2631481a;
+  --dsw-alias-state-idle-primary:#d4d4d4;
+  --dsw-alias-state-business-primary:#4176e6;
+  --dsw-alias-state-warn-primary:#f59e0b;
+  --dsw-alias-state-success-primary:#22c55e;
+  --dsw-alias-state-error-primary:#ec1313;
+}
+body[data-ds-dark-theme]{
+  color-scheme: dark;
+  --bg:#0d0e10; --card:#151619; --fg:#f2f4f7; --fg2:#b9bfc7; --fg3:#7f8791; --line:#ffffff1f;
+  --dsw-alias-bg-base:#151517;
+  --dsw-alias-bg-layer-1:#232324;
+  --dsw-alias-bg-layer-2:#2c2c2e;
+  --dsw-alias-bg-layer-3:#353638;
+  --dsw-alias-bg-overlay:#61666b;
+  --dsw-alias-border-l1:#ffffff0f;
+  --dsw-alias-border-l2:#ffffff1f;
+  --dsw-alias-label-primary:#f9fafb;
+  --dsw-alias-label-secondary:#cfd3d6;
+  --dsw-alias-label-tertiary:#adb2b8;
+  --dsw-alias-label-caption:#81858c;
+  --dsw-alias-label-primary-inverted:#353638;
+  --dsw-alias-brand-primary:#f9fafb;
+  --dsw-alias-interactive-bg-hover:#ffffff14;
+  --dsw-alias-interactive-bg-active:#ffffff24;
+  --dsw-alias-state-idle-primary:#545557;
+  --dsw-alias-state-business-primary:#7aaaff;
+  --dsw-alias-state-warn-primary:#f59e0b;
+  --dsw-alias-state-success-primary:#22c55e;
+  --dsw-alias-state-error-primary:#f25a5a;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);
+  font:13px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased}
+.page{max-width:1180px;margin:0 auto;padding:26px 22px 80px}
+h1{font-size:17px;margin:0 0 4px;font-weight:650}
+.sub{color:var(--fg2);font-size:12.5px;margin:0 0 16px;max-width:74ch}
+.bar{display:flex;gap:12px;align-items:center;margin:0 0 18px;flex-wrap:wrap}
+.bar button{font:inherit;font-size:12px;padding:5px 12px;border-radius:7px;border:0;background:var(--card);
+  box-shadow:inset 0 0 0 1px var(--line);color:var(--fg);cursor:pointer}
+.bar button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.mono{font:11.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--fg2)}
+.card{background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:14px 16px;margin:0 0 16px}
+.card h2{font-size:12.5px;margin:0 0 10px;font-weight:650}
+.verify{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-size:11.5px}
+.verify b{color:var(--fg2);font-weight:500}
+.sz{margin:0 0 18px}
+.sz h3{font-size:12px;margin:0 0 8px;font-weight:650;color:var(--fg2)}
+.sz h3 em{font-style:normal;color:var(--fg3);font-weight:400;margin-left:8px}
+.grid{display:grid;grid-template-columns:64px repeat(8,1fr);gap:6px 4px;align-items:center}
+.grid .hcell{font-size:9.5px;color:var(--fg3);text-align:center;letter-spacing:.2px}
+.grid .rname{font-size:10.5px;color:var(--fg2);white-space:nowrap}
+.grid .cell{display:flex;align-items:center;justify-content:center;min-height:calc(var(--cell) + 6px)}
+.scenes{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.scene{background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:12px 14px}
+.scene h4{font-size:11.5px;margin:0 0 10px;color:var(--fg2);font-weight:600}
+.rows{width:300px;max-width:100%}
+.rowmain{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+.rowmain b{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rowmain i{font-size:10.5px;font-style:normal;color:var(--dsw-alias-label-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rowstate{font-size:10.5px;color:var(--dsw-alias-label-secondary);flex:none}
+.hairs{display:flex;gap:10px;flex-wrap:wrap}
+.haircell{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 8px;border-radius:10px;
+  box-shadow:inset 0 0 0 1px var(--line)}
+.haircell svg{display:block;background:var(--card);image-rendering:pixelated}
+.haircell b{font-size:10.5px;font-weight:600}
+.haircell em{font:10px/1 ui-monospace,Menlo,monospace;font-style:normal;color:var(--fg3)}
+.fanrow{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+.fanrow .fb{display:flex;flex-direction:column;align-items:center;gap:6px}
+.fanrow .fb span{font-size:10px;color:var(--fg3)}
+.bigwrap{width:144px;height:144px;display:flex;align-items:center;justify-content:center;
+  background:var(--card);border-radius:14px}
+.bigwrap > *{transform:scale(4);transform-origin:center center}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>RoleAvatar 像素稿 · 验证台</h1>
+  <p class="sub">页面不手抄实现：运行时 <code>fetch</code> 真 <code>client.js</code>，按标记切出真 CSS 与真
+    <code>RoleAvatar</code>（花括号配对），注入最小 <code>h()</code> 后直接渲染。下面打印切片校验值，供对照源文件。</p>
+
+  <div class="bar">
+    <button id="th" data-dark="0" aria-pressed="false">切换浅色 / 暗色</button>
+    <span class="mono" id="hint">等待切片…</span>
+  </div>
+
+  <div class="card" id="verifyCard">
+    <h2>切片校验</h2>
+    <div class="verify" id="verify"></div>
+  </div>
+
+  <div class="card">
+    <h2>矩阵 · 8 角色 × 8 状态 × 7 尺寸（+ fan 30 / 32）</h2>
+    <div id="matrix"></div>
+  </div>
+
+  <div class="card">
+    <h2>hair 剪影 8/8（32px 档，只画头发路径）</h2>
+    <div class="hairs" id="hairs"></div>
+  </div>
+
+  <div class="card">
+    <h2>fan 28px 档 · 4× 放大（24 格，1.17–1.33px/格）</h2>
+    <div class="fanrow" id="fanBig"></div>
+  </div>
+
+  <div class="card">
+    <h2>真实场景</h2>
+    <div class="scenes">
+      <div class="scene">
+        <h4>44px 行列表（size 20 / 18）</h4>
+        <div class="rows" id="sceneRows"></div>
+      </div>
+      <div class="scene">
+        <h4>dock facepile（size 28，-6px 叠压）</h4>
+        <div id="scenePile" style="display:flex;align-items:center;height:64px"></div>
+      </div>
+      <div class="scene">
+        <h4>36px 头像放大 4×（144）</h4>
+        <div class="bigwrap" id="sceneBig"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/* 最小 h()：只做本组件用到的事（className / style / 属性 / children） */
+function h(type, props, ...children) {
+  if (typeof type === 'function') return type(Object.assign({}, props, { children }));
+  return { type, props: props || {}, children: children.flat(Infinity).filter((c) => c != null && c !== false) };
+}
+function mount(node, ns) {
+  if (node == null || node === false) return null;
+  if (typeof node === 'string' || typeof node === 'number') return document.createTextNode(String(node));
+  const isSvg = ns === SVG_NS || node.type === 'svg';
+  const el = isSvg ? document.createElementNS(SVG_NS, node.type) : document.createElement(node.type);
+  for (const [k, v] of Object.entries(node.props || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'className') el.setAttribute('class', v);
+    else if (k === 'style' && typeof v === 'object') {
+      for (const [sk, sv] of Object.entries(v)) {
+        if (typeof sv === 'number') el.style.setProperty(sk.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase()), sv + 'px');
+        else el.style.setProperty(sk.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase()), sv);
+      }
+    } else {
+      // React maps camelCase SVG props to kebab attributes but keeps a few
+      // case-sensitive ones verbatim; mirror that so the harness renders the
+      // same DOM the app does (shapeRendering -> shape-rendering).
+      const KEEP = new Set(['viewBox', 'preserveAspectRatio', 'gradientUnits', 'gradientTransform', 'clipPathUnits']);
+      const name = KEEP.has(k) ? k : k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase());
+      el.setAttribute(name, String(v));
+    }
+  }
+  for (const c of node.children || []) {
+    const child = mount(c, isSvg ? SVG_NS : null);
+    if (child) el.appendChild(child);
+  }
+  return el;
+}
+
+/* 括号配对：跳过字符串 / 模板串 / 注释；open/close 可以是 {} 或 [] */
+function slicePair(src, from, open, close) {
+  let i = src.indexOf(open, from);
+  const start = i;
+  let depth = 0;
+  for (; i < src.length; i++) {
+    const ch = src[i];
+    if (ch === '"' || ch === "'" || ch === '`') {
+      const q = ch;
+      i++;
+      while (i < src.length && src[i] !== q) { if (src[i] === '\\') i++; i++; }
+      continue;
+    }
+    if (ch === '/' && src[i + 1] === '/') { while (i < src.length && src[i] !== '\n') i++; continue; }
+    if (ch === '/' && src[i + 1] === '*') { i = src.indexOf('*/', i) + 1; continue; }
+    if (ch === open) depth++;
+    else if (ch === close) { depth--; if (depth === 0) return { text: src.slice(start, i + 1), start, end: i + 1 }; }
+  }
+  throw new Error('unbalanced ' + open);
+}
+
+const res = await fetch('../../../client.js', { cache: 'no-store' });
+if (!res.ok) throw new Error('client.js 取不到：' + res.status);
+const src = await res.text();
+
+/* 1) 真 CSS */
+const cssStart = src.indexOf('const CSS = `');
+const cssFrom = cssStart + 'const CSS = `'.length;
+const cssEnd = src.indexOf('`;', cssFrom);
+const css = src.slice(cssFrom, cssEnd);
+const styleEl = document.createElement('style');
+styleEl.textContent = css;
+document.head.appendChild(styleEl);
+
+/* 2) 真 px 代码块 */
+const pxFrom = src.indexOf('// >>> px-avatar');
+const pxTo = src.indexOf('// <<< px-avatar');
+const pxBlock = src.slice(pxFrom, pxTo);
+
+/* 3) 真 RoleAvatar：从声明头到函数体右花括号（参数里有解构，不能取第一个 {） */
+const raFrom = src.indexOf('function RoleAvatar(');
+const bodyOpen = src.indexOf(') {', raFrom) + 2;
+const raBody = slicePair(src, bodyOpen, '{', '}');
+const raSrc = src.slice(raFrom, bodyOpen) + raBody.text;
+
+/* 4) 真 ROLES 数据（数组配对） */
+const rolesFrom = src.indexOf('const ROLES = [');
+const rolesArr = slicePair(src, rolesFrom, '[', ']');
+const ROLES = new Function('return ' + rolesArr.text)();
+
+const pxApi = new Function('h', pxBlock + '\n' + raSrc + '\nreturn { RoleAvatar, pixelAvatar, pxGrid };')(h);
+const RoleAvatar = pxApi.RoleAvatar;
+const pixelAvatar = pxApi.pixelAvatar;
+const pxGrid = pxApi.pxGrid;
+
+/* 切片校验 */
+const sha = async (t) => {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
+};
+const rows = [
+  ['RoleAvatar 源码 sha256', await sha(raSrc)],
+  ['RoleAvatar 字符数', String(raSrc.length)],
+  ['px-avatar 块 sha256', await sha(pxBlock)],
+  ['px-avatar 块字符数', String(pxBlock.length)],
+  ['CSS sha256', await sha(css)],
+  ['CSS 字符数', String(css.length)],
+  ['CSS 里 hex 命中', String((css.match(/#[0-9a-fA-F]{3,8}\b/g) || []).length)],
+  ['ROLES 条数', String(ROLES.length)],
+];
+document.getElementById('verify').innerHTML = rows
+  .map(([k, v]) => `<b>${k}</b><span class="mono">${v}</span>`)
+  .join('');
+
+/* 矩阵：8 角色 × 8 状态 × 7 尺寸 */
+const STATES = ['idle', 'ready', 'working', 'waiting', 'done', 'error', 'failed', 'provisioning'];
+const SIZES = [18, 19, 20, 24, 28, 32, 48];
+const matrix = document.getElementById('matrix');
+for (const size of SIZES) {
+  const grid = pxGrid(size);
+  const sec = document.createElement('section');
+  sec.className = 'sz';
+  sec.innerHTML = `<h3>${size}px<em>${grid} 格网格 · ${grid === 16 ? 'mini' : grid === 24 ? 'mid' : 'full'}</em></h3>`;
+  const g = document.createElement('div');
+  g.className = 'grid';
+  g.style.setProperty('--cell', size + 'px');
+  g.appendChild(Object.assign(document.createElement('div'), { className: 'hcell' }));
+  for (const st of STATES) {
+    const c = Object.assign(document.createElement('div'), { className: 'hcell', textContent: st });
+    g.appendChild(c);
+  }
+  for (const role of ROLES) {
+    const nm = Object.assign(document.createElement('div'), {
+      className: 'rname',
+      textContent: role.zh.name,
+    });
+    g.appendChild(nm);
+    for (const st of STATES) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.appendChild(mount(h(RoleAvatar, { role, size, status: st })));
+      g.appendChild(cell);
+    }
+  }
+  sec.appendChild(g);
+  matrix.appendChild(sec);
+}
+
+/* fan 覆盖尺寸 30 / 32 */
+{
+  const sec = document.createElement('section');
+  sec.className = 'sz';
+  sec.innerHTML = '<h3>fan 覆盖<em>--wt-fan-av 30 / 32（同一角色 8 态）</em></h3>';
+  for (const size of [30, 32]) {
+    const g = document.createElement('div');
+    g.className = 'grid';
+    g.style.setProperty('--cell', size + 'px');
+    g.appendChild(Object.assign(document.createElement('div'), { className: 'hcell', textContent: size + 'px' }));
+    for (const st of STATES) {
+      const c = Object.assign(document.createElement('div'), { className: 'hcell', textContent: st });
+      g.appendChild(c);
+    }
+    const role = ROLES[1];
+    g.appendChild(Object.assign(document.createElement('div'), { className: 'rname', textContent: role.zh.name }));
+    for (const st of STATES) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.appendChild(mount(h(RoleAvatar, { role, size, status: st })));
+      g.appendChild(cell);
+    }
+    sec.appendChild(g);
+  }
+  matrix.appendChild(sec);
+}
+
+/* 场景 1：44px 行列表 */
+{
+  const box = document.getElementById('sceneRows');
+  const picks = [
+    [0, 'working', 20], [1, 'idle', 20], [2, 'waiting', 18], [3, 'error', 20],
+    [4, 'done', 18], [6, 'failed', 20],
+  ];
+  for (const [i, st, size] of picks) {
+    const role = ROLES[i];
+    const row = document.createElement('div');
+    row.className = 'wt-row';
+    row.appendChild(mount(h(RoleAvatar, { role, size, status: st, dot: true })));
+    const main = document.createElement('div');
+    main.className = 'rowmain';
+    main.innerHTML = `<b>${role.zh.name}</b><i>${role.zh.role}</i>`;
+    row.appendChild(main);
+    const rs = document.createElement('div');
+    rs.className = 'rowstate';
+    rs.textContent = st;
+    row.appendChild(rs);
+    box.appendChild(row);
+  }
+}
+
+/* 场景 2：dock facepile（真实 .wt-facepile / .wt-seat 结构） */
+{
+  const pile = document.createElement('div');
+  pile.className = 'wt-facepile';
+  for (const [i, st] of [[0, 'working'], [1, 'idle'], [2, 'waiting'], [3, 'done'], [4, 'error']]) {
+    const seat = document.createElement('span');
+    seat.className = 'wt-seat';
+    seat.appendChild(mount(h(RoleAvatar, { role: ROLES[i], size: 28, status: st })));
+    pile.appendChild(seat);
+  }
+  document.getElementById('scenePile').appendChild(pile);
+}
+
+/* hair 剪影：只画头发路径，4× 放大，附路径 hash */
+{
+  const box = document.getElementById('hairs');
+  for (const role of ROLES) {
+    const p = pixelAvatar(role, 32);
+    const h = (await sha(p.hair)).slice(0, 10);
+    const cell = document.createElement('div');
+    cell.className = 'haircell';
+    cell.innerHTML = `<svg viewBox="0 0 32 32" width="128" height="128" shape-rendering="crispEdges">
+      <path d="${p.hair}" fill="#1b2433"/></svg><b>${role.zh.name}</b><em>${h}</em>`;
+    box.appendChild(cell);
+  }
+}
+
+/* fan 28px 档放大 4× */
+{
+  const box = document.getElementById('fanBig');
+  for (const size of [32, 30, 28]) {
+    const wrap = document.createElement('div');
+    wrap.className = 'fb';
+    const inner = document.createElement('div');
+    inner.style.cssText = 'width:' + size * 4 + 'px;height:' + size * 4 + 'px;display:flex;align-items:center;justify-content:center';
+    const av = mount(h(RoleAvatar, { role: ROLES[1], size: 28, status: 'working' }));
+    av.style.transform = 'scale(4)';
+    av.style.transformOrigin = 'center';
+    inner.appendChild(av);
+    wrap.appendChild(inner);
+    const label = document.createElement('span');
+    label.textContent = `--wt-fan-av ${size}px · ${(size / 24).toFixed(2)}px/格`;
+    wrap.appendChild(label);
+    box.appendChild(wrap);
+  }
+}
+
+/* 场景 3：36 放大 4× */
+{
+  const big = document.getElementById('sceneBig');
+  big.appendChild(mount(h(RoleAvatar, { role: ROLES[1], size: 36, status: 'working' })));
+}
+
+/* 主题切换 */
+const th = document.getElementById('th');
+th.addEventListener('click', () => {
+  const dark = document.body.hasAttribute('data-ds-dark-theme');
+  if (dark) document.body.removeAttribute('data-ds-dark-theme');
+  else document.body.setAttribute('data-ds-dark-theme', '');
+  th.setAttribute('aria-pressed', String(!dark));
+  th.textContent = dark ? '当前：浅色 → 切暗色' : '当前：暗色 → 切浅色';
+});
+th.textContent = '当前：浅色 → 切暗色';
+document.getElementById('hint').textContent = '切片完成 · ' + ROLES.length + ' 角色 · ' + SIZES.length + ' 尺寸 · 8 态';
+window.__harnessReady = true;
+</script>
+</body>
+</html>

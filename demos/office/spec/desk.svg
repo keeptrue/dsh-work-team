@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  员工办公室 · 工位标准单元 spec (v2)  —  designer / 2026-10-26
+  v2: 加了显示器屏幕内容（7 态）、椅背、桌面边缘、过道两种处理；尺寸对齐 a.html。
+
+  WHAT THIS FILE IS
+  One cell = one member. Three projections of the same object, all drawn at the
+  width the sidebar really gives us: 280 content px (300 column - 10 padding).
+
+      #cell-corridor    B 单列走廊   280 x 64   desk 116 | corridor 40 | text 124
+      #cell-grid        A 俯视网格   127 x 86   127 + 26 gutter + 127 = 280
+      #cell-iso         C 等距房间   280 x 108  floor-only, true 30deg
+
+      #mon-unit         the monitor module, 78 x 32, origin top-left
+      #scr-idle #scr-working #scr-waiting #scr-done
+      #scr-error #scr-failed #scr-provisioning     seven screens, same box
+      #slot-mascot      where mascot.svg goes
+
+  WHAT CHANGED VS a.html (and why it is an addition, not a rewrite)
+  a.html already found the two things that matter: the monitor carries the state
+  as a beam of light, and in the light theme bg-layer-1/2/3 are all pure white so
+  depth has to come from dark objects plus borders. v2 keeps both and adds:
+    1. real SCREEN CONTENT per state (a.html's screen is an empty bezel + a leak
+       line). 7 glyphs, all in the same 70x24 inner box: 4 text bars + caret
+       (working), a bare caret (waiting), a check (done), a cross (error), a
+       skeleton (provisioning), a dark panel (idle), nothing + dashed bezel
+       (failed). A screen is the only place where 3-4px of geometry still reads.
+    2. the chair back and the desk edge, so the mascot sits IN a place instead of
+       floating on a card.
+    3. the aisle drawn as a real element in both A and B, so the handoff walk has
+       somewhere to happen.
+
+  COLOUR
+  Furniture is neutral. Identity is the collar. State is the screen glyph plus
+  the ambient glow. The ink family (mascot silhouette, monitor body, screen face,
+  paper) is the only place with literal hex, because those must read the same in
+  light and dark. Hex in the style block below are sheet-local stand-ins for the
+  real dsw-alias tokens, plus light-theme fallbacks; product code inherits.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 618" width="320" height="618"
+     font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+
+  <title>工位标准单元 · 三种投影 · 七种屏幕</title>
+
+  <defs>
+    <style>
+      svg {
+        --dsw-alias-bg-base:#f6f7f9;
+        --dsw-alias-bg-layer-1:#ffffff;
+        --dsw-alias-bg-layer-2:#f0f2f5;
+        --dsw-alias-bg-layer-3:#e7eaef;
+        --dsw-alias-border-l1:#e2e5ea;
+        --dsw-alias-border-l2:#cfd4dc;
+        --dsw-alias-label-primary:#1c2026;
+        --dsw-alias-label-secondary:#6b7280;
+        --dsw-alias-label-tertiary:#9aa1ac;
+        --dsw-alias-label-primary-inverted:#ffffff;
+        --dsw-alias-state-business-primary:#4176e6;
+        --dsw-alias-state-warn-primary:#f59e0b;
+        --dsw-alias-state-success-primary:#22c55e;
+        --dsw-alias-state-error-primary:#ec1313;
+        --dsw-alias-state-idle-primary:#d4d4d4;
+        /* ink family: the only literals, identical in both themes */
+        --wt-ink:#171b22;
+        --wt-ink-2:#333d4b;
+        --wt-ink-panel:#23262c;
+        --wt-ink-screen:#0d1015;
+        --wt-paper:#f2f4f7;
+        --wt-state:var(--dsw-alias-state-business-primary);
+      }
+      .h1{font-size:10px;font-weight:700;fill:var(--dsw-alias-label-primary)}
+      .h2{font-size:8px;fill:var(--dsw-alias-label-secondary)}
+      .lbl{font-size:8px;fill:var(--dsw-alias-label-secondary)}
+      .dim{font-size:7px;fill:var(--dsw-alias-label-tertiary)}
+      .dim2{font-size:6.5px;fill:var(--dsw-alias-label-tertiary)}
+      .floor{fill:none;stroke:var(--dsw-alias-border-l1);stroke-width:.6;stroke-dasharray:3 2}
+      .slot{fill:none;stroke:var(--dsw-alias-border-l2);stroke-width:.8;stroke-dasharray:2 2}
+      .deskedge{fill:color-mix(in srgb,var(--dsw-alias-label-primary) 14%,transparent)}
+      .chair{fill:color-mix(in srgb,var(--dsw-alias-label-primary) 7%,transparent);
+             stroke:var(--dsw-alias-border-l2);stroke-width:.7}
+      .lane{fill:color-mix(in srgb,var(--dsw-alias-label-primary) 4%,transparent)}
+      .laneline{fill:none;stroke:var(--dsw-alias-border-l2);stroke-width:.8;stroke-dasharray:3 3}
+      .guide{fill:none;stroke:var(--dsw-alias-border-l2);stroke-width:.5;stroke-dasharray:1.5 2}
+      .bar{fill:color-mix(in srgb,var(--dsw-alias-label-primary) 10%,transparent)}
+      .glow{fill:var(--wt-state);opacity:.2;filter:url(#soft)}
+    </style>
+
+    <!-- the wall spill: a blurred blob, not a coloured card -->
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+
+    <!-- ══ the monitor module 78 x 32 ═══════════════════════════════════════
+         Bezel is an ink object (a screen is dark in both themes). Screen face is
+         inset 4/3, 70 x 24, so every glyph below shares one box. -->
+    <g id="mon-unit">
+      <rect x="0" y="0" width="78" height="32" rx="4" fill="var(--wt-ink-panel)"/>
+      <rect x=".5" y=".5" width="77" height="31" rx="3.5" fill="none"
+            stroke="color-mix(in srgb,var(--dsw-alias-label-primary-inverted,#fff) 10%,transparent)"
+            stroke-width=".8"/>
+      <rect x="4" y="3" width="70" height="24" rx="2" fill="var(--wt-ink-screen)"/>
+      <rect x="35" y="32" width="8" height="4" fill="var(--wt-ink-panel)"/>
+      <rect x="29" y="35.5" width="20" height="1.6" rx=".8" fill="var(--wt-ink-panel)"/>
+    </g>
+
+    <!-- ══ seven screens, all inside 78 x 32 ══════════════════════════════ -->
+
+    <!-- idle: two faint lines, no caret. The screen is on but nobody is at it. -->
+    <g id="scr-idle">
+      <rect x="4" y="3" width="70" height="24" rx="2" fill="var(--wt-ink-screen)"/>
+      <g fill="var(--dsw-alias-label-secondary)" opacity=".34">
+        <rect x="9" y="10" width="26" height="2" rx="1"/>
+        <rect x="9" y="15" width="17" height="2" rx="1"/>
+      </g>
+    </g>
+
+    <!-- working: four code lines + a caret at the end of the last one. -->
+    <g id="scr-working">
+      <rect x="4" y="3" width="70" height="24" rx="2" fill="var(--wt-ink-screen)"/>
+      <g fill="var(--dsw-alias-state-business-primary)">
+        <rect x="9" y="8" width="38" height="2" rx="1" opacity=".9"/>
+        <rect x="9" y="13" width="26" height="2" rx="1" opacity=".72"/>
+        <rect x="9" y="18" width="44" height="2" rx="1" opacity=".9"/>
+        <rect x="56" y="17" width="2" height="4" rx="1"/>
+      </g>
+    </g>
+
+    <!-- waiting: the screen is holding a prompt open for you — one big caret. -->
+    <g id="scr-waiting">
+      <rect x="4" y="3" width="70" height="24" rx="2" fill="var(--wt-ink-screen)"/>
+      <rect x="10" y="9" width="5" height="12" rx="1" fill="var(--dsw-alias-state-warn-primary)"/>
+      <rect x="20" y="13" width="30" height="2" rx="1"
+            fill="var(--dsw-alias-state-warn-primary)" opacity=".38"/>
+    </g>
+
+    <!-- done: a check. The only glyph that reads as an answer. -->
+    <g id="scr-done">
+      <rect x="4" y="3" width="70" height="24" rx="2" fill="var(--wt-ink-screen)"/>
+      <path d="M28 15.5 35.5 22.5 50 8.5" fill="none"
+            stroke="var(--dsw-alias-state-success-primary)" stroke-width="3"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- error: a cross over a broken line. -->
+    <g id="scr-error">
+      <rect x="4" y="3" width="70" height="24" rx="2" fill="var(--wt-ink-screen)"/>
+      <rect x="9" y="18" width="18" height="2" rx="1"
+            fill="var(--dsw-alias-state-error-primary)" opacity=".3"/>
+      <path d="M30 9.5 47 22.5M47 9.5 30 22.5" fill="none"
+            stroke="var(--dsw-alias-state-error-primary)" stroke-width="3" stroke-linecap="round"/>
+    </g>
+
+    <!-- failed: no signal at all. Empty face + the bezel itself goes dashed. -->
+    <g id="scr-failed">
+      <rect x="4" y="3" width="70" height="24" rx="2" fill="var(--wt-ink-screen)" opacity=".55"/>
+      <rect x="7" y="6" width="64" height="18" rx="2" fill="none"
+            stroke="var(--dsw-alias-state-error-primary)" stroke-width=".8"
+            stroke-dasharray="3 3" opacity=".6"/>
+    </g>
+
+    <!-- provisioning: a skeleton, i.e. the shape of content that is not there. -->
+    <g id="scr-provisioning">
+      <rect x="4" y="3" width="70" height="24" rx="2" fill="var(--wt-ink-screen)"/>
+      <g fill="var(--dsw-alias-label-secondary)" opacity=".26">
+        <rect x="9" y="8" width="30" height="2" rx="1"/>
+        <rect x="9" y="13" width="42" height="2" rx="1"/>
+        <rect x="9" y="18" width="22" height="2" rx="1"/>
+      </g>
+      <rect x="8" y="7" width="46" height="4.5" rx="2" fill="none"
+            stroke="var(--dsw-alias-state-business-primary)" stroke-width=".8"
+            stroke-dasharray="2 2" opacity=".75"/>
+    </g>
+
+    <!-- the mascot slot: dashed box + a 34% ink ghost -->
+    <g id="slot-mascot">
+      <rect class="slot" x="0" y="0" width="32" height="32" rx="3"/>
+      <g fill="var(--wt-ink)" opacity=".3">
+        <circle cx="16" cy="13.5" r="7.6"/>
+        <path d="M6 32Q6 22.5 16 22.5Q26 22.5 26 32Z"/>
+      </g>
+    </g>
+
+    <!-- ══ B · single-column corridor 280 x 64 ════════════════════════════
+         desk 0..116 | corridor 116..156 | text 156..280.
+         Right-desk variant: mirror ONLY the scene group (x -> 280-x), the text
+         column stays put, or the name would read backwards. -->
+    <g id="cell-corridor">
+      <rect class="lane" x="116" y="0" width="40" height="64"/>
+      <rect class="glow" x="20" y="-4" width="90" height="46" rx="10"/>
+      <use href="#mon-unit" x="26" y="0"/>
+      <use href="#scr-working" x="26" y="0"/>
+      <rect class="chair" x="44" y="50" width="28" height="12" rx="5"/>
+      <use href="#slot-mascot" transform="translate(43 24)"/>
+      <rect class="deskedge" x="0" y="54" width="116" height="2"/>
+      <path class="laneline" d="M136 3V61"/>
+      <rect class="slot" x="160" y="13" width="108" height="12" rx="2"/>
+      <rect class="slot" x="160" y="30" width="84" height="10" rx="2"/>
+      <path class="guide" d="M116 0V64M156 0V64"/>
+    </g>
+
+    <!-- ══ A · top-down grid 127 x 86, one of two ═════════════════════════
+         Two cells + a 26px vertical gutter = 280. The gutter is the lane; the
+         row seam is just a hairline. Walking happens in the gutter, which is
+         why the walk in A is always one step sideways + N steps down. -->
+    <g id="cell-grid">
+      <rect class="glow" x="18" y="-4" width="90" height="46" rx="10"/>
+      <use href="#mon-unit" x="24" y="0"/>
+      <use href="#scr-working" x="24" y="0"/>
+      <rect class="chair" x="50" y="56" width="26" height="10" rx="4"/>
+      <use href="#slot-mascot" transform="translate(47 26) scale(.9375)"/>
+      <rect class="deskedge" x="8" y="54" width="110" height="2"/>
+      <rect class="slot" x="10" y="70" width="106" height="9" rx="2"/>
+    </g>
+
+    <!-- ══ C · isometric room 280 x 108 ═══════════════════════════════════
+         True 30deg floor (half-width 80, half-height 46). The monitor is nearly
+         edge-on here, so its screen cannot hold glyphs: C keeps the glow and
+         loses the screen as a state channel. That is the honest cost of C. -->
+    <g id="cell-iso">
+      <path class="glow" d="M118 50 158 73 158 47 118 24Z"/>
+      <path d="M140 20 186 46 140 72 94 46Z"
+            fill="color-mix(in srgb,var(--dsw-alias-label-primary) 6%,transparent)"
+            stroke="var(--dsw-alias-border-l2)" stroke-width=".7"/>
+      <path d="M96 45 140 20 140 12 96 37Z" fill="var(--wt-ink-panel)"/>
+      <path d="M101 39 133 21 133 18.5 101 36.5Z" fill="var(--dsw-alias-state-business-primary)" opacity=".55"/>
+      <use href="#slot-mascot" transform="translate(124 58)"/>
+      <path class="laneline" d="M60 58 140 12M140 12 220 58M140 104 220 58M60 58 140 104"/>
+    </g>
+  </defs>
+
+  <!-- ══ sheet ═══════════════════════════════════════════════════════════ -->
+  <rect x="0" y="0" width="320" height="618" fill="var(--dsw-alias-bg-base)"/>
+  <text class="h1" x="8" y="13">desk.svg v2 · 一个标准单元，三种投影 · 内容宽 280</text>
+  <text class="h2" x="8" y="24">家具中性；身份=项圈；状态=屏幕字形 + 环境光。尺寸对齐 a.html，屏幕内容是新加的。</text>
+
+  <!-- B -->
+  <text class="lbl" x="8" y="42">B 单列走廊 · 280×64 · 桌 116 | 走廊 40 | 文字 124</text>
+  <use href="#cell-corridor" transform="translate(8 48)"/>
+  <text class="dim" x="8" y="124">走廊 40 = 32px 吉祥物 + 4px 余量；右桌变体只镜像场景组（x→280−x），文字列不动</text>
+
+  <!-- A -->
+  <text class="lbl" x="8" y="146">A 俯视网格 · 127×86 ×2 + 26 竖向过道 = 280</text>
+  <use href="#cell-grid" transform="translate(8 152)"/>
+  <rect class="lane" x="135" y="152" width="26" height="86"/>
+  <path class="laneline" d="M148 156V234"/>
+  <use href="#cell-grid" transform="translate(161 152)"/>
+  <text class="dim" x="8" y="250">A 的过道是竖向的（a.html 已经是这样）：走动永远是「横一步 + 纵 N 步」，不会穿过别人工位</text>
+
+  <!-- C -->
+  <text class="lbl" x="8" y="272">C 等距房间 · 280×108 · 地面半宽 80 / 半高 46 = 29.9°</text>
+  <use href="#cell-iso" transform="translate(8 278)"/>
+  <text class="dim" x="8" y="398">C 里显示器近乎侧对镜头，屏幕放不下字形 → 状态只剩光晕一个通道；再加墙每间要 +42px</text>
+
+  <!-- seven screens -->
+  <path class="guide" d="M8 410H312"/>
+  <text class="lbl" x="8" y="424">七种屏幕 · 同一 78×32 盒子，字形是唯一能在 3–4px 里读出状态的通道</text>
+  <g>
+    <g transform="translate(8 430)"><use href="#mon-unit"/><use href="#scr-idle"/></g>
+    <text class="dim" x="47" y="474" text-anchor="middle">idle 待命</text>
+    <g transform="translate(120 430)"><use href="#mon-unit"/><use href="#scr-working"/></g>
+    <text class="dim" x="159" y="474" text-anchor="middle">working 干活</text>
+    <g transform="translate(232 430)"><use href="#mon-unit"/><use href="#scr-waiting"/></g>
+    <text class="dim" x="271" y="474" text-anchor="middle">waiting 等你</text>
+    <g transform="translate(8 484)"><use href="#mon-unit"/><use href="#scr-done"/></g>
+    <text class="dim" x="47" y="528" text-anchor="middle">done 有新结果</text>
+    <g transform="translate(120 484)"><use href="#mon-unit"/><use href="#scr-error"/></g>
+    <text class="dim" x="159" y="528" text-anchor="middle">error 异常结束</text>
+    <g transform="translate(232 484)"><use href="#mon-unit"/><use href="#scr-failed"/></g>
+    <text class="dim" x="271" y="528" text-anchor="middle">failed 入职失败</text>
+    <g transform="translate(8 538)"><use href="#mon-unit"/><use href="#scr-provisioning"/></g>
+    <text class="dim" x="47" y="582" text-anchor="middle">provisioning 入职中</text>
+  </g>
+
+  <text class="dim2" x="8" y="600">屏幕字形用固定状态 token，不跟随 --wt-state：✓ 永远是绿的，</text>
+  <text class="dim2" x="8" y="610">环境光晕才跟 --wt-state 走。两者同时变 = 状态在两层上被说了一遍。</text>
+</svg>

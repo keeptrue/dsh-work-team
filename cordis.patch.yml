@@ -1,0 +1,22 @@
+# Work Team bundle: one Host plugin row. The browser half ships through dsh.client.
+- insert:
+    - id: work-team
+      name: '@local/dsh-work-team'
+      config:
+        teamSize: 7
+        reporting: milestones
+        allowSelfHire: true
+        maxWorkersPerEmployee: 2
+        trimEmployeeTools: true
+        employeeStepBudget: 24
+        autoStart: 'off'
+        dispatchPrefix: true
+        leadHandsOff: false
+        modelPm: ''
+        modelFrontend: ''
+        modelBackend: ''
+        modelReviewer: ''
+        modelResearcher: ''
+        modelDesigner: ''
+        modelOps: ''
+        modelWriter: ''
