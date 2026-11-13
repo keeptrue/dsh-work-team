@@ -19,6 +19,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { apply } from '../index.js';
+import { until } from './support/until.js';
 
 /** @param {number} ms - wait. @returns {Promise<void>} settled after the delay. */
 function delay(ms) {
@@ -216,14 +217,26 @@ function makeHost({
 
 /**
  * Boot a fixture and run the Lead's first sync.
+ *
+ * The startup sync runs through a 120 ms debounce and then a promise queue, so a
+ * fixed settle is a gamble. `ready` names the outcome this test is waiting for
+ * and is polled; callers with nothing to wait for (a config that applies no
+ * model) simply omit it.
+ *
  * @param {object} options - makeHost options.
+ * @param {(host: object) => unknown} [ready] - condition that means "the startup sync landed".
  * @returns {Promise<object>} the settled host.
  */
-async function boot(options) {
+async function boot(options, ready) {
   const host = makeHost(options);
   apply(host.ctx, options.config ?? {});
   await host.emitCreated({ agent: host.lead, source: 'startup' });
-  await delay(SETTLE_MS);
+  if (typeof ready === 'function') {
+    await until(() => ready(host), {
+      timeout: 4000,
+      describe: () => ({ appends: host.appends.length, warnings: host.warnings.length }),
+    });
+  }
   return host;
 }
 
@@ -233,10 +246,13 @@ const ROSTER = [
 ];
 
 test('a configured role model is applied to that employee only', async () => {
-  const host = await boot({
-    config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
-    roster: ROSTER,
-  });
+  const host = await boot(
+    {
+      config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
+      roster: ROSTER,
+    },
+    (h) => h.appends.length === 1,
+  );
   try {
     assert.deepEqual(host.appends, [
       {
@@ -251,16 +267,27 @@ test('a configured role model is applied to that employee only', async () => {
 });
 
 test('the ownership-gated selectModel is never called', async () => {
-  const host = await boot({
-    config: { modelReviewer: 'workbuddy-cn::glm-5.2', modelPm: 'workbuddy-cn::glm-5.2' },
-    roster: ROSTER,
-  });
+  const host = await boot(
+    {
+      config: { modelReviewer: 'workbuddy-cn::glm-5.2', modelPm: 'workbuddy-cn::glm-5.2' },
+      roster: ROSTER,
+    },
+    (h) => h.appends.length === 2,
+  );
   try {
+    const baseline = host.appends.length;
     host.setSettings({ modelPm: 'workbuddy-cn::deepseek-v4.1-flash' });
     host.emitDocumentUpdated('work-team');
-    await delay(SETTLE_MS);
+    await until(() => host.appends.length > baseline, {
+      timeout: 4000,
+      describe: () => host.appends.length,
+    });
     host.emitSelection(host.lead, { provider: 'workbuddy-cn', model: 'deepseek-v4.1' });
-    await delay(SETTLE_MS);
+    // The assertion below only needs proof that the later syncs ran at all.
+    await until(() => host.appends.length > baseline, {
+      timeout: 4000,
+      describe: () => host.appends.length,
+    });
     assert.ok(host.appends.length >= 2, 'the fixture applied at least one model per path');
     assert.deepEqual(host.selectModelCalls, []);
   } finally {
@@ -276,7 +303,10 @@ test('an empty model field pins the Lead route at apply time', async () => {
   });
   apply(pinned.ctx, {});
   await pinned.emitCreated({ agent: pinned.lead, source: 'startup' });
-  await delay(SETTLE_MS);
+  await until(() => pinned.appends.length === 2, {
+    timeout: 4000,
+    describe: () => pinned.appends.length,
+  });
   try {
     assert.deepEqual(
       pinned.appends.map((entry) => entry.agentId),
@@ -300,10 +330,13 @@ test('an empty model field pins the Lead route at apply time', async () => {
 });
 
 test('a malformed model spec is reported instead of applied', async () => {
-  const host = await boot({
-    config: { modelReviewer: 'glm-5.3-flash' },
-    roster: ROSTER,
-  });
+  const host = await boot(
+    {
+      config: { modelReviewer: 'glm-5.3-flash' },
+      roster: ROSTER,
+    },
+    (h) => h.warnings.length >= 1,
+  );
   try {
     assert.deepEqual(host.appends, []);
     assert.equal(host.warnings.length, 1);
@@ -320,13 +353,16 @@ test('a malformed model spec is reported instead of applied', async () => {
 
 test('a resolver failure is recorded once and retried on the next sync', async () => {
   const failure = new Error('provider "workbuddy-cn" is not registered');
-  const host = await boot({
-    config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
-    roster: ROSTER,
-    resolveCallConfig: () => {
-      throw failure;
+  const host = await boot(
+    {
+      config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
+      roster: ROSTER,
+      resolveCallConfig: () => {
+        throw failure;
+      },
     },
-  });
+    (h) => h.warnings.length >= 1,
+  );
   try {
     assert.deepEqual(host.appends, []);
     assert.equal(host.warnings.length, 1, 'one warning for the first failure');
@@ -346,7 +382,10 @@ test('a resolver failure is recorded once and retried on the next sync', async (
     // Once the resolver works, the next sync applies the model and clears the error.
     host.setResolveCallConfig((candidate) => candidate);
     host.emitDocumentUpdated('work-team');
-    await delay(SETTLE_MS);
+    await until(() => host.appends.length === 1, {
+      timeout: 4000,
+      describe: () => host.appends.length,
+    });
     assert.deepEqual(host.appends, [
       {
         agentId: 'sess-reviewer',
@@ -361,12 +400,17 @@ test('a resolver failure is recorded once and retried on the next sync', async (
 });
 
 test('a repeated sync appends the selection once', async () => {
-  const host = await boot({
-    config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
-    roster: ROSTER,
-  });
+  const host = await boot(
+    {
+      config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
+      roster: ROSTER,
+    },
+    (h) => h.appends.length === 1,
+  );
   try {
     assert.equal(host.appends.length, 1);
+    // These two are holds, not waits: the point is that the model is NOT
+    // re-applied, so a settle is the right shape here.
     host.emitDocumentUpdated('work-team');
     await delay(SETTLE_MS);
     host.emitDocumentUpdated('work-team');
@@ -384,7 +428,10 @@ test('a work-team settings save re-applies the model to online employees', async
 
     host.setSettings({ modelReviewer: 'workbuddy-cn::glm-5.2' });
     host.emitDocumentUpdated('work-team');
-    await delay(SETTLE_MS);
+    await until(() => host.appends.length === 1, {
+      timeout: 4000,
+      describe: () => host.appends.length,
+    });
     assert.deepEqual(host.appends, [
       {
         agentId: 'sess-reviewer',
@@ -416,7 +463,10 @@ test('a Lead model change re-pins empty fields and leaves explicit ones alone', 
   });
   apply(host.ctx, { modelBackend: 'workbuddy-cn::glm-5.2' });
   await host.emitCreated({ agent: host.lead, source: 'startup' });
-  await delay(SETTLE_MS);
+  await until(() => host.appends.length === 2, {
+    timeout: 4000,
+    describe: () => host.appends.length,
+  });
   try {
     assert.deepEqual(host.appends, [
       { agentId: 'sess-pm', selection: { provider: 'workbuddy-cn', model: 'deepseek-v4.1' } },
@@ -424,7 +474,10 @@ test('a Lead model change re-pins empty fields and leaves explicit ones alone', 
     ]);
 
     host.emitSelection(host.lead, { provider: 'workbuddy-cn', model: 'deepseek-v4.1-flash' });
-    await delay(SETTLE_MS);
+    await until(() => host.appends.length === 3, {
+      timeout: 4000,
+      describe: () => host.appends.length,
+    });
     assert.deepEqual(host.appends, [
       { agentId: 'sess-pm', selection: { provider: 'workbuddy-cn', model: 'deepseek-v4.1' } },
       { agentId: 'sess-backend', selection: { provider: 'workbuddy-cn', model: 'glm-5.2' } },
@@ -439,11 +492,14 @@ test('a Lead model change re-pins empty fields and leaves explicit ones alone', 
 });
 
 test('an unusable selection registry is reported instead of silently ignored', async () => {
-  const host = await boot({
-    config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
-    roster: ROSTER,
-    registryMissing: true,
-  });
+  const host = await boot(
+    {
+      config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
+      roster: ROSTER,
+      registryMissing: true,
+    },
+    (h) => h.warnings.length >= 1,
+  );
   try {
     assert.deepEqual(host.appends, []);
     assert.equal(host.warnings.length, 1);
@@ -459,11 +515,14 @@ test('an unusable selection registry is reported instead of silently ignored', a
 });
 
 test('a missing LLM service is reported instead of silently ignored', async () => {
-  const host = await boot({
-    config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
-    roster: ROSTER,
-    llmMissing: true,
-  });
+  const host = await boot(
+    {
+      config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
+      roster: ROSTER,
+      llmMissing: true,
+    },
+    (h) => h.warnings.length >= 1,
+  );
   try {
     assert.deepEqual(host.appends, []);
     assert.equal(host.warnings.length, 1);
@@ -474,18 +533,21 @@ test('a missing LLM service is reported instead of silently ignored', async () =
 });
 
 test('the resolved route drops request controls and normalizes the effort', async () => {
-  const host = await boot({
-    config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
-    roster: ROSTER,
-    resolveCallConfig: (candidate) => ({
-      ...candidate,
-      provider: 'workbuddy-cn',
-      model: 'glm-5.2',
-      // A branded effort and a materialized maxTokens, as the real resolver returns.
-      reasoningEffort: { toString: () => 'high' },
-      maxTokens: 32000,
-    }),
-  });
+  const host = await boot(
+    {
+      config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
+      roster: ROSTER,
+      resolveCallConfig: (candidate) => ({
+        ...candidate,
+        provider: 'workbuddy-cn',
+        model: 'glm-5.2',
+        // A branded effort and a materialized maxTokens, as the real resolver returns.
+        reasoningEffort: { toString: () => 'high' },
+        maxTokens: 32000,
+      }),
+    },
+    (h) => h.appends.length === 1,
+  );
   try {
     assert.deepEqual(host.appends, [
       {
@@ -499,11 +561,14 @@ test('the resolved route drops request controls and normalizes the effort', asyn
 });
 
 test('a resolved default effort is not re-appended on the next sync', async () => {
-  const host = await boot({
-    config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
-    roster: ROSTER,
-    resolveCallConfig: (candidate) => ({ ...candidate, reasoningEffort: 'high' }),
-  });
+  const host = await boot(
+    {
+      config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
+      roster: ROSTER,
+      resolveCallConfig: (candidate) => ({ ...candidate, reasoningEffort: 'high' }),
+    },
+    (h) => h.appends.length === 1,
+  );
   try {
     assert.equal(host.appends.length, 1);
     host.emitDocumentUpdated('work-team');
@@ -515,10 +580,13 @@ test('a resolved default effort is not re-appended on the next sync', async () =
 });
 
 test('a disposed plugin stops applying models', async () => {
-  const host = await boot({
-    config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
-    roster: ROSTER,
-  });
+  const host = await boot(
+    {
+      config: { modelReviewer: 'workbuddy-cn::glm-5.2' },
+      roster: ROSTER,
+    },
+    (h) => h.appends.length === 1,
+  );
   assert.equal(host.appends.length, 1);
 
   host.dispose();

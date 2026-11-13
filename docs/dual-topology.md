@@ -40,6 +40,22 @@ startActivation && rootOf && namesOf
 
 名册只取**直接子节点**：办公室面板、容量规则、`@role` 路由说的都是那七个正式角色，员工自己再开的临时工不占座 —— 与旧 `listMembers()` 的口径一致（它同样不列孙辈）。
 
+## 2.5 0.2.2 的两处差异
+
+上面的映射表讲的是"调用搬家"，但 0.2.2 还有两件事会直接改变运行行为，且 0.2.1 上都不存在：
+
+| 维度 | 0.2.1（Team 服务） | 0.2.2（subagent 树） |
+|---|---|---|
+| 任务板门禁 | 无会话开关，`createTask` / `listTasks` / `updateTask` 直接可用 | 会话级 `team/mode` 开关；关着时任何任务板操作抛 `TEAM_DISABLED` |
+| 花名册来源 | `agentTeam` 投影的 `members` | `agentTeam` 不再带 `members`，改由 `subagentCatalog` 投影（`id` / `name` / `mode`）推导 |
+
+对应的两处适配：
+
+- **`ensureTeamBoard`**：团队工具（`team_start` / `team_status` / `hire_teammate` / `dispatch_tasks`）与自动组建在动手前，先确认本会话的任务板是开的；关着就打开，`unavailable` / `unsupported` 就按现状继续，不让门禁挡住招人与派活。同一回合里的并发调用按 root Session id 合并——飞行中的开关写入只发一次，后到的调用等同一个结果，不会重复写设置。用户在输入框模型选项里显式关掉之后不再强行打开，`team_status` 的 `taskBoard` 字段（`on` / `off` / `unavailable` / `unsupported`）就是给用户看当前状态的。
+- **`memberRows`**：把两种投影归一成同一份行数据（`id` / `name`），客户端渲染、容量判据、`@role` 匹配都读它，`members` 与 `subagentCatalog` 的形状差异不外溢到上层。只收 `mode === 'continuable'` 的具名子会话：`external` / `one-shot` / `unknown` 都不算工位，与 §2「名册只取直接子节点」同一口径。
+
+两者在旧拓扑上都是 no-op：`ensureTeamBoard` 没有开关可开，`memberRows` 直通 `members`。所以 0.2.1 的行为一个字没变，旧拓扑的回归目标就是"零变化"。
+
 ## 3. 工具注册：没有撞名，不需要改名
 
 work-team 自己注册的只有五个（`index.js:1424-1427`、`index.js:1661-1664`）：

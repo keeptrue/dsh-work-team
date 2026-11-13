@@ -16,11 +16,27 @@
  *   inject copies   2
  * After the fix the same kind of request is 46,586 chars / inject 1.
  *
+ * `--check` in CI has nothing to measure (no session log in a fresh checkout): it
+ * prints SKIP and exits 0. That is a skip, never a pass — a green CI run does not
+ * mean the budget was verified, only that it could not be.
+ *
  * Usage:
  *   node scripts/measure-context.mjs                # newest session in this workspace
  *   node scripts/measure-context.mjs <sessionId>    # one specific session
  *   node scripts/measure-context.mjs --tools        # also list tool names
  *   node scripts/measure-context.mjs --json         # machine-readable output
+ *   node scripts/measure-context.mjs --check <maxSystemChars> <maxToolBytes>
+ *                                                   # exit non-zero when a request
+ *                                                   # exceeds the budget (CI guard)
+ *
+ * `--check` thresholds, measured 2026-11-13 on session b1fe1e2c-ffad-469a-ae90-5e4a2db43652
+ * (this workspace, 110 tools):
+ *   system/message  47,221 chars  -> limit  60,000  (+27.0%)
+ *   request/header  87,084 bytes  -> limit 100,000  (+14.8%)
+ * The system limit stays below the pre-2026-10-27 duplicate-injection baseline
+ * (79,338 chars), so shipping the injected prompt twice fails the check instead of
+ * quietly doubling it; the tools limit leaves room for roughly a dozen more tools.
+ * With no session log (CI), the check SKIPS and says so — a skip is not a pass.
  */
 
 import { spawnSync } from 'node:child_process'
@@ -39,9 +55,19 @@ const BASELINE = {
 const INJECT_MARKER = 'REFUSAL HARDENING'
 const ZSTD_CANDIDATES = [process.env.ZSTD, 'zstd', '/usr/bin/zstd', '/usr/local/bin/zstd'].filter(Boolean)
 
+/** Budget used when `--check` is passed without numbers. Keep in sync with the note above. */
+const CHECK_DEFAULTS = {
+  system: 60_000,
+  tools: 100_000,
+}
+
 function fail(message) {
   console.error(`measure-context: ${message}`)
   process.exit(1)
+}
+
+function usage(message) {
+  fail(`${message}\n  usage: node scripts/measure-context.mjs [sessionId] [--tools] [--json] [--check [<maxSystemChars> <maxToolBytes>]]`)
 }
 
 /** DSH encodes a workspace path into its session directory name. */
@@ -170,18 +196,65 @@ function countOccurrences(haystack, needle) {
 
 const num = (value) => Number(value).toLocaleString('en-US')
 
+/** Read `--check [<maxSystemChars> <maxToolBytes>]` and drop its numbers from the positionals. */
+function parseArgs(argv) {
+  const opts = { wantTools: false, wantJson: false, limits: null }
+  const positional = []
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i]
+    if (arg === '--tools') {
+      opts.wantTools = true
+    } else if (arg === '--json') {
+      opts.wantJson = true
+    } else if (arg === '--check') {
+      const numbers = []
+      while (numbers.length < 2 && /^\d+$/.test(argv[i + 1] ?? '')) {
+        numbers.push(Number(argv[i + 1]))
+        i += 1
+      }
+      if (numbers.length === 1) usage('--check needs both limits, or neither')
+      if (numbers.length === 2 && numbers.some((value) => value <= 0)) usage('--check limits must be positive')
+      opts.limits = numbers.length === 2
+        ? { system: numbers[0], tools: numbers[1] }
+        : { ...CHECK_DEFAULTS }
+    } else if (arg.startsWith('--')) {
+      usage(`unknown flag "${arg}"`)
+    } else {
+      positional.push(arg)
+    }
+  }
+  if (positional.length > 1) usage(`expected at most one session id, got ${positional.length}`)
+  opts.sessionId = positional[0] ?? ''
+  return opts
+}
+
+/** Compare one measurement against the budget; `over` is empty when the request fits. */
+function evaluateCheck(report, limits) {
+  const over = []
+  if (report.systemChars > limits.system) {
+    over.push({ metric: 'system/message', value: report.systemChars, max: limits.system, unit: 'chars' })
+  }
+  if (report.toolsBytes > limits.tools) {
+    over.push({ metric: 'request/header', value: report.toolsBytes, max: limits.tools, unit: 'bytes' })
+  }
+  return { status: over.length === 0 ? 'pass' : 'fail', over }
+}
+
 function main() {
-  const argv = process.argv.slice(2)
-  const wantTools = argv.includes('--tools')
-  const wantJson = argv.includes('--json')
-  const positional = argv.filter((arg) => !arg.startsWith('--'))
-  if (positional.length > 1) fail(`expected at most one session id, got ${positional.length}`)
+  const { wantTools, wantJson, limits, sessionId } = parseArgs(process.argv.slice(2))
 
   const root = sessionsRootFor(process.cwd())
-  const target = positional[0] ? findSessionById(root, positional[0]) : newestLogIn(root)
+  const target = sessionId ? findSessionById(root, sessionId) : newestLogIn(root)
   if (!target) {
-    fail(positional[0]
-      ? `session "${positional[0]}" not found under ${path.dirname(root)}`
+    // A CI checkout has no session logs at all: measuring is impossible, so the
+    // budget check has nothing to judge. Skipping is honest; passing is not.
+    if (limits && !sessionId) {
+      console.log(`context-check: SKIP  no session logs under ${root}`)
+      console.log('context-check: nothing measured — this is a skip, not a pass (run a turn in this workspace to measure)')
+      return
+    }
+    fail(sessionId
+      ? `session "${sessionId}" not found under ${path.dirname(root)}`
       : `no session logs under ${root} (run a turn in this workspace first)`)
   }
 
@@ -211,8 +284,12 @@ function main() {
     toolNames,
   }
 
+  const check = limits ? evaluateCheck(report, limits) : null
+  if (check) report.check = { ...check, maxSystemChars: limits.system, maxToolBytes: limits.tools }
+
   if (wantJson) {
     console.log(JSON.stringify(report, null, 2))
+    if (check && check.status === 'fail') process.exitCode = 1
     return
   }
 
@@ -230,6 +307,20 @@ function main() {
   console.log(`per request      ${num(report.total).padStart(9)}  (system chars + tools bytes)`)
   console.log(`baseline         ${num(report.baseline).padStart(9)}  (${num(BASELINE.system)} + ${num(BASELINE.tools)})`)
   console.log(`delta            ${(sign + num(delta)).padStart(9)}  (${sign}${pct.toFixed(1)}%)`)
+
+  if (check) {
+    console.log('')
+    if (check.status === 'pass') {
+      console.log(`context-check: PASS  system ${num(report.systemChars)} <= ${num(limits.system)} chars, `
+        + `tools ${num(report.toolsBytes)} <= ${num(limits.tools)} bytes`)
+    } else {
+      console.log('context-check: FAIL')
+      for (const item of check.over) {
+        console.log(`  ${item.metric}  ${num(item.value)} > ${num(item.max)} ${item.unit}  (${num(item.value - item.max)} over)`)
+      }
+      process.exitCode = 1
+    }
+  }
 
   if (wantTools) {
     console.log('')

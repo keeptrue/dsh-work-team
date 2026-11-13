@@ -104,9 +104,36 @@ window.__ModuleLoader__.load({
       'office.tab.tasks': '任务板',
       'office.settings': '团队设置',
       'office.totalTokens': '团队已用',
+      'office.budgetTitle': '团队已用 / 预算上限',
+      'office.budgetUnlimited': '{amount}（未设上限）',
+      'office.budgetExceeded': '超预算',
+      'office.budgetExceededTitle': '团队 token 已超出预算',
+      'office.benchCount': '停职',
+      'office.benchTitle': '停职：占编制、不接新活，仍可被验收',
+      'office.handover': '换届',
+      'office.handoverTitle': '把当前团队写成一份给新会话的简报（跑 team_handover）',
+      'office.handoverRequest': '帮我换届：跑 team_handover 把简报给我。',
+      'office.handoverSent': '已发出',
+      'office.handoverFailed': '换届请求没发出去',
+      'drawer.open': '打开 {name} 的详情',
+      'drawer.openTitle': '详情',
+      'drawer.title': '{name} 的详情',
+      'drawer.close': '关闭详情',
+      'drawer.unknown': '还没读到',
+      'drawer.none': '无',
+      'drawer.activity': '最近活动',
+      'drawer.settled': '最后一轮结算',
+      'drawer.events': '最近事件',
+      'drawer.eventsNone': '暂无（未接入事件投影）',
+      'drawer.openChat': '打开会话',
+      'office.boardOffHint': '团队协作已关闭，任务板不再更新。',
+      'office.boardEnable': '开启团队协作',
+      'office.boardEnableFailed': '开启失败',
+      'office.boardEnableUnavailable': '当前 DSH 版本没有团队协作开关',
       'status.provisioning': '入职中',
       'status.ready': '已就位',
       'status.idle': '待命',
+      'status.benched': '停职',
       'status.working': '干活中',
       'status.waiting': '等你回复',
       'status.done': '有新结果',
@@ -125,6 +152,26 @@ window.__ModuleLoader__.load({
       'task.inProgress': '进行中',
       'task.completed': '已完成',
       'task.blocked': '被阻塞',
+      'task.awaitingAcceptance': '待验收',
+      'task.accept': '验收',
+      'task.acceptTitle': '提交验收证据',
+      'task.acceptEvidence': '证据',
+      'task.acceptPlaceholder': '写一句能复核的证据：改了什么、跑过什么、在哪能看到',
+      'task.acceptSend': '交给主管验收',
+      'task.acceptSent': '已交给主管',
+      'task.cancel': '取消',
+      'task.create': '新建任务',
+      'task.createTitle': '新建任务',
+      'task.createSubject': '标题（必填，≤200）',
+      'task.createDescription': '描述（可选）',
+      'task.createScopes': '涉及文件（可选，空格或逗号分隔）',
+      'task.createSubjectLong': '标题超过 200 字',
+      'task.createSend': '交给主管建',
+      'task.createQueued': '已交给主管建任务',
+      'task.assign': '指派',
+      'task.assignTitle': '把任务指派给谁',
+      'task.assignSent': '已交给主管改派',
+      'task.assignEmpty': '花名册里还没有人',
       'task.ready': '可认领',
       'settings.sectionTitle': '团队设置',
       'settings.sectionIntro': '每位员工的模型、汇报频率与自动化开关，改动即时生效。',
@@ -142,6 +189,13 @@ window.__ModuleLoader__.load({
       'settings.maxWorkers': '临时工上限',
       'settings.maxWorkersHint': '员工自己开的一次性子 agent，不占编制但吃 token；0 表示禁止。',
       'settings.costHint': '跟随主对话的员工会用同一个模型，成本叠加。给研究、审查单独配便宜模型更省。',
+      'settings.budget': '预算',
+      'settings.tokenBudget': '团队 token 预算',
+      'settings.tokenBudgetHint': '团队累计用量上限，跨任务累加；0 表示不限。这里填的是 token 数，不是金额。',
+      'settings.tokenBudgetOnExceed': '超出预算时',
+      'settings.tokenBudgetOnExceed.warn': '只提醒',
+      'settings.tokenBudgetOnExceed.block': '暂停派活',
+      'settings.tokenBudgetOnExceedHint': '只提醒：办公室顶部标出超预算，派活照常；暂停派活：超出的那一刻起主管不再派新任务。',
       'settings.loading': '正在读取配置…',
       'settings.unavailableForm': '当前 profile 没有启用配置表单，暂时只能在 cordis.patch.yml 里改。',
       'settings.saveFailed': '保存失败，请重试。',
@@ -162,6 +216,7 @@ window.__ModuleLoader__.load({
       'dispatch.sent': '已派给 {name}',
       'dispatch.failed': '没派出去：{reason}',
       'dispatch.notHired': '未入职',
+      'dispatch.benched': '停职',
       'dispatch.hireHint': '说「招」',
       'settings.automation': '自动化',
       'settings.autoStart': '自动组建团队',
@@ -175,6 +230,14 @@ window.__ModuleLoader__.load({
       'settings.trimEmployeeToolsHint': '开启后每位员工只保留本职需要的工具，每次请求省约 70% 的工具 schema；关掉后恢复全部工具，改动即时生效。',
       'settings.leadHandsOff': '主管不亲手改文件',
       'settings.leadHandsOffHint': '开启后主管调用 write / edit 会被拒绝并说明理由；工具仍留在列表里，read、grep、bash 照常可用。',
+      'settings.benchRoles': '停职角色',
+      'settings.benchRolesHint': '填角色 id，逗号或空格分隔（fe / be / qa / ops 这类短别名也认）。停职 = 占编制、不接新活，不是删除；停职的员工仍可被验收。',
+      'settings.presets': '权限档',
+      'settings.presetReviewer': '审查的权限档',
+      'settings.presetResearcher': '研究的权限档',
+      'settings.presetOps': '运维的权限档',
+      'settings.presetsHint': '插件只切换、不定义权限档；留空 = 不接管。值必须是这台机器上已定义的档名：默认部署通常只有 workspace-write / danger-full-access，想要只读得先在 profile 里定义自己的 preset。这里存的是配置，填了不等于已生效——到底生效的是哪个档，看 team_status 里 members[].preset。另外别给审查配只读档：只读沙箱会挡住 node --test 的临时文件，测试会以权限错的形式失败，容易被当成代码问题。',
+      'settings.preset.none': '不接管',
     };
 
     const en = {
@@ -199,9 +262,36 @@ window.__ModuleLoader__.load({
       'office.tab.tasks': 'Task board',
       'office.settings': 'Team settings',
       'office.totalTokens': 'Team tokens',
+      'office.budgetTitle': 'Team tokens used / budget',
+      'office.budgetUnlimited': '{amount} (no limit)',
+      'office.budgetExceeded': 'over budget',
+      'office.budgetExceededTitle': 'The team token budget is exceeded',
+      'office.benchCount': 'benched',
+      'office.benchTitle': 'On the bench: holds a seat, takes no new work, can still be accepted',
+      'office.handover': 'Hand over',
+      'office.handoverTitle': 'Write the current team into a brief for a new chat (runs team_handover)',
+      'office.handoverRequest': 'Hand me over: run team_handover and give me the brief.',
+      'office.handoverSent': 'Sent',
+      'office.handoverFailed': 'The handover request did not go out',
+      'drawer.open': "Open {name}'s details",
+      'drawer.openTitle': 'Details',
+      'drawer.title': "{name}'s details",
+      'drawer.close': 'Close details',
+      'drawer.unknown': 'Not read yet',
+      'drawer.none': 'None',
+      'drawer.activity': 'Recent activity',
+      'drawer.settled': 'Last settlement',
+      'drawer.events': 'Recent events',
+      'drawer.eventsNone': 'None yet (no event projection is wired)',
+      'drawer.openChat': 'Open chat',
+      'office.boardOffHint': 'Team collaboration is off, so this board no longer updates.',
+      'office.boardEnable': 'Turn on team collaboration',
+      'office.boardEnableFailed': 'Could not turn it on',
+      'office.boardEnableUnavailable': 'This DSH build has no team collaboration switch',
       'status.provisioning': 'Joining',
       'status.ready': 'Ready',
       'status.idle': 'Idle',
+      'status.benched': 'On the bench',
       'status.working': 'Working',
       'status.waiting': 'Waiting for you',
       'status.done': 'New result',
@@ -220,6 +310,26 @@ window.__ModuleLoader__.load({
       'task.inProgress': 'In progress',
       'task.completed': 'Done',
       'task.blocked': 'blocked',
+      'task.awaitingAcceptance': 'awaiting acceptance',
+      'task.accept': 'Accept',
+      'task.acceptTitle': 'Submit acceptance evidence',
+      'task.acceptEvidence': 'Evidence',
+      'task.acceptPlaceholder': 'One checkable line: what changed, what you ran, where to look',
+      'task.acceptSend': 'Send to the Lead',
+      'task.acceptSent': 'Sent to the Lead',
+      'task.cancel': 'Cancel',
+      'task.create': 'New task',
+      'task.createTitle': 'New task',
+      'task.createSubject': 'Subject (required, ≤200)',
+      'task.createDescription': 'Description (optional)',
+      'task.createScopes': 'Files touched (optional, space or comma separated)',
+      'task.createSubjectLong': 'The subject is over 200 characters',
+      'task.createSend': 'Send to the Lead',
+      'task.createQueued': 'Handed to the Lead to create',
+      'task.assign': 'Assign',
+      'task.assignTitle': 'Assign this task to',
+      'task.assignSent': 'Handed to the Lead to reassign',
+      'task.assignEmpty': 'The roster is empty',
       'task.ready': 'ready',
       'settings.sectionTitle': 'Team settings',
       'settings.sectionIntro': 'Per-role models, reporting cadence, and automation switches — changes apply immediately.',
@@ -237,6 +347,13 @@ window.__ModuleLoader__.load({
       'settings.maxWorkers': 'Temporary worker cap',
       'settings.maxWorkersHint': 'One-off subagents an employee spawns itself: no seat, but they spend tokens. 0 disables them.',
       'settings.costHint': 'Employees following the main chat share its model, so cost adds up. Cheaper models for research/review save money.',
+      'settings.budget': 'Budget',
+      'settings.tokenBudget': 'Team token budget',
+      'settings.tokenBudgetHint': 'Cap on the team’s cumulative usage, summed across tasks; 0 means no limit. This counts tokens, not money.',
+      'settings.tokenBudgetOnExceed': 'When the budget is exceeded',
+      'settings.tokenBudgetOnExceed.warn': 'Warn only',
+      'settings.tokenBudgetOnExceed.block': 'Stop dispatching',
+      'settings.tokenBudgetOnExceedHint': 'Warn only: the office header flags it and work continues. Stop dispatching: the Lead sends nothing new from that point on.',
       'settings.loading': 'Loading configuration…',
       'settings.unavailableForm': 'The settings form is not enabled in this profile; edit cordis.patch.yml for now.',
       'settings.saveFailed': 'Save failed. Try again.',
@@ -257,6 +374,7 @@ window.__ModuleLoader__.load({
       'dispatch.sent': 'Sent to {name}',
       'dispatch.failed': 'Not dispatched: {reason}',
       'dispatch.notHired': 'Not hired',
+      'dispatch.benched': 'benched',
       'dispatch.hireHint': 'Say “招”',
       'settings.automation': 'Automation',
       'settings.autoStart': 'Build the team automatically',
@@ -270,6 +388,14 @@ window.__ModuleLoader__.load({
       'settings.trimEmployeeToolsHint': 'Each teammate only keeps the tools its role needs, cutting about 70% of the tool schema per request; switch it off to restore every tool. Takes effect immediately.',
       'settings.leadHandsOff': 'Lead keeps its hands off files',
       'settings.leadHandsOffHint': 'The Lead still lists write and edit, but every call is refused with a reason; read, grep, and bash keep working.',
+      'settings.benchRoles': 'Benched roles',
+      'settings.benchRolesHint': 'Role ids, comma or space separated (short aliases such as fe / be / qa / ops work too). Benched = holds a seat and takes no new work; it is not a removal, and benched employees can still be accepted.',
+      'settings.presets': 'Permission presets',
+      'settings.presetReviewer': 'Reviewer preset',
+      'settings.presetResearcher': 'Researcher preset',
+      'settings.presetOps': 'Ops preset',
+      'settings.presetsHint': 'The plugin only switches presets, never defines them; empty = hands off. The value must be a preset this machine defines: a default deployment ships workspace-write / danger-full-access only, so a read-only tier has to be defined in your profile first. This field is configuration: typing a name does not mean it applied — `team_status` → `members[].preset` is what actually ran. Do not give the reviewer a read-only tier either: a read-only sandbox blocks `node --test`’s temp files, and the failure shows up as a permission error that reads like a code bug.',
+      'settings.preset.none': 'hands off',
     };
 
     const CSS = `
@@ -303,6 +429,11 @@ window.__ModuleLoader__.load({
       .wt-st-done { --wt-raw:var(--dsw-alias-state-success-primary); }
       .wt-st-error,.wt-st-failed { --wt-raw:var(--dsw-alias-state-error-primary); }
       .wt-st-idle { --wt-raw:var(--dsw-alias-state-idle-primary); }
+      /* Bench: a person who holds a seat and stopped taking work. Neutral by
+         decision — it is a state, not an error, so it never borrows the error or
+         warn hue, and it stays distinguishable from an empty desk (which has no
+         figure at all). */
+      .wt-st-benched { --wt-raw:var(--dsw-alias-label-tertiary); }
       /* Ready keeps the success hue but desaturated, so a just-onboarded team
          reads as calm: no ring animation, no dot pulse, nothing to click. */
       .wt-st-ready { --wt-raw:color-mix(in srgb, var(--dsw-alias-state-success-primary) 45%, var(--dsw-alias-label-secondary)); }
@@ -316,6 +447,7 @@ window.__ModuleLoader__.load({
          declare their own --wt-state later in this sheet, and a global status
          rule would silently repaint them. */
       .wt-desk.wt-st-idle { --wt-state:color-mix(in srgb, var(--dsw-alias-label-secondary) 60%, var(--dsw-alias-label-primary)); }
+      .wt-desk.wt-st-benched { --wt-state:color-mix(in srgb, var(--dsw-alias-label-tertiary) 82%, var(--dsw-alias-label-primary)); }
       .wt-desk.wt-st-working { --wt-state:var(--dsw-alias-state-business-primary); }
       .wt-desk.wt-st-provisioning { --wt-state:var(--dsw-alias-state-business-primary); }
       .wt-desk.wt-st-waiting { --wt-state:color-mix(in srgb, var(--dsw-alias-state-warn-primary) 56%, var(--dsw-alias-label-primary)); }
@@ -327,6 +459,7 @@ window.__ModuleLoader__.load({
          data-ds-dark-theme on <body>, the demo puts data-theme="dark" on <html>,
          and both are accepted. */
       :is(body[data-ds-dark-theme], html[data-theme="dark"]) .wt-desk.wt-st-idle { --wt-state:color-mix(in srgb, var(--dsw-alias-label-secondary) 54%, var(--dsw-alias-label-primary)); }
+      :is(body[data-ds-dark-theme], html[data-theme="dark"]) .wt-desk.wt-st-benched { --wt-state:color-mix(in srgb, var(--dsw-alias-label-tertiary) 76%, var(--dsw-alias-label-primary)); }
       :is(body[data-ds-dark-theme], html[data-theme="dark"]) .wt-desk.wt-st-working { --wt-state:color-mix(in srgb, var(--dsw-alias-state-business-primary) 83%, var(--dsw-alias-label-primary)); }
       :is(body[data-ds-dark-theme], html[data-theme="dark"]) .wt-desk.wt-st-provisioning { --wt-state:var(--dsw-alias-state-business-primary); }
       :is(body[data-ds-dark-theme], html[data-theme="dark"]) .wt-desk.wt-st-waiting { --wt-state:var(--dsw-alias-state-warn-primary); }
@@ -458,6 +591,37 @@ window.__ModuleLoader__.load({
       .wt-person-task[data-empty="true"] { color:var(--dsw-alias-label-tertiary); }
 
       .wt-person-rule { flex:none; height:0.5px; margin:14px 0; background:var(--dsw-alias-border-l1); }
+      /* ── v2.5 · task-board writes and the member drawer ────────────────────
+         New surfaces only: every colour below is an existing alias, every
+         motion is either a plain opacity/transform transition or nothing at
+         all, and no office/desk measurement is redefined. */
+      .wt-desk-info { position:absolute; left:6px; top:6px; z-index:7; width:18px; height:18px; padding:0; border:0; border-radius:5px; font:inherit; font-size:10px; line-height:18px; text-align:center; cursor:pointer; color:var(--dsw-alias-label-secondary); background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 88%, transparent); box-shadow:inset 0 0 0 1px var(--dsw-alias-border-l1); }
+      .wt-desk-info:hover { color:var(--dsw-alias-label-primary); background:var(--dsw-alias-interactive-bg-hover); }
+      .wt-desk-info:focus-visible { outline:2px solid var(--dsw-alias-brand-primary); outline-offset:1px; }
+      .wt-row-info { position:relative; z-index:2; flex:none; width:18px; height:18px; padding:0; border:0; border-radius:5px; font:inherit; font-size:10px; line-height:18px; text-align:center; cursor:pointer; color:var(--dsw-alias-label-secondary); background:transparent; }
+      .wt-row-info:hover { color:var(--dsw-alias-label-primary); background:var(--dsw-alias-bg-layer-2); }
+      .wt-row-info:focus-visible { outline:2px solid var(--dsw-alias-brand-primary); outline-offset:1px; }
+      .wt-task-act { padding:1px 6px; font-size:10px; }
+      .wt-board-write { display:flex; align-items:center; gap:6px; margin:0 0 8px; }
+      .wt-accept { position:fixed; z-index:1302; left:50%; top:50%; transform:translate(-50%,-50%); width:min(360px, calc(100vw - 32px)); box-sizing:border-box; display:flex; flex-direction:column; gap:8px; padding:12px 14px; border:0.5px solid var(--dsw-alias-border-l2); border-radius:12px; background:var(--dsw-alias-bg-overlay); color:var(--dsw-alias-label-primary); box-shadow:0 12px 32px color-mix(in srgb, var(--dsw-alias-label-primary) 18%, transparent); }
+      .wt-accept-title { font-size:13px; font-weight:600; line-height:18px; }
+      .wt-accept-hint { font-size:11px; line-height:16px; color:var(--dsw-alias-label-secondary); }
+      .wt-accept-input { box-sizing:border-box; width:100%; min-height:64px; resize:vertical; padding:6px 8px; font:inherit; font-size:12px; line-height:18px; color:var(--dsw-alias-label-primary); background:var(--dsw-alias-bg-layer-2); border:0.5px solid var(--dsw-alias-border-l1); border-radius:7px; outline:none; }
+      .wt-accept-input:focus { box-shadow:0 0 0 2px color-mix(in srgb, var(--dsw-alias-state-business-primary) 35%, transparent); }
+      .wt-accept-error { font-size:11px; line-height:16px; color:var(--dsw-alias-state-error-primary); }
+      .wt-accept-row { display:flex; align-items:center; gap:8px; justify-content:flex-end; }
+      .wt-accept-sent { font-size:11px; color:var(--dsw-alias-state-success-primary); }
+      .wt-drawer { position:fixed; z-index:1301; top:0; right:0; bottom:0; width:min(340px, 92vw); box-sizing:border-box; display:flex; flex-direction:column; gap:12px; padding:14px 16px; overflow:auto; border-left:0.5px solid var(--dsw-alias-border-l1); background:var(--dsw-alias-bg-overlay); color:var(--dsw-alias-label-primary); }
+      .wt-drawer-head { display:flex; align-items:flex-start; gap:10px; }
+      .wt-drawer-id { display:flex; flex-direction:column; gap:2px; min-width:0; flex:1 1 auto; }
+      .wt-drawer-name { font-size:15px; font-weight:600; line-height:20px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .wt-drawer-role { font-size:11.5px; line-height:16px; color:var(--dsw-alias-label-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .wt-drawer-sec { display:flex; flex-direction:column; gap:3px; }
+      .wt-drawer-key { font-size:10.5px; line-height:14px; color:var(--dsw-alias-label-tertiary); }
+      .wt-drawer-val { font-size:12px; line-height:18px; color:var(--dsw-alias-label-primary); overflow-wrap:anywhere; }
+      .wt-drawer-val[data-empty="true"] { color:var(--dsw-alias-label-tertiary); }
+      .wt-drawer-rule { flex:none; height:0.5px; background:var(--dsw-alias-border-l1); }
+      .wt-drawer-actions { margin-top:auto; display:flex; gap:8px; }
       .wt-person-facts { display:grid; grid-template-columns:56px minmax(0,1fr); gap:6px 8px; }
       .wt-person-fact-k { font-size:11px; line-height:18px; color:var(--dsw-alias-label-tertiary); }
       .wt-person-fact-v { min-width:0; font-size:12px; line-height:18px; color:var(--dsw-alias-label-primary); font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -550,6 +714,19 @@ window.__ModuleLoader__.load({
       .wt-panel-head { position:sticky; top:0; z-index:1; display:flex; align-items:center; gap:8px; height:28px; min-height:28px; padding:0 8px 0 10px; box-sizing:border-box; background:var(--dsw-alias-bg-layer-1); border-bottom:0.5px solid var(--dsw-alias-border-l1); }
       .wt-panel-stats { display:flex; align-items:baseline; gap:10px; min-width:0; flex:1; font-size:10.5px; color:var(--dsw-alias-label-secondary); white-space:nowrap; overflow:hidden; font-variant-numeric:tabular-nums; }
       .wt-head-stat { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+      /* Over-budget flag: the warn token the status dots already use, so no new
+         colour enters the sheet and the chip reads the same in both themes. */
+      .wt-head-budget { flex:none; font-weight:600; color:var(--dsw-alias-state-warn-primary); }
+      /* The bench count is a state, not an alarm: same neutral as the plate.
+         It also gives up its width first (flex-shrink 6), so a cramped header
+         keeps 干活中 rather than the bench count. No container query changes. */
+      .wt-head-bench { flex:0 6 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; color:var(--dsw-alias-label-tertiary); }
+      /* Handover is the only control in the 28px head, so it stays compact and
+         inherits the row's type scale instead of adding a new size. */
+      .wt-head-btn { flex:none; height:20px; padding:0 6px; border:0.5px solid var(--dsw-alias-border-l1); border-radius:var(--dsw-radius-sm); background:var(--dsw-alias-bg-layer-2); color:var(--dsw-alias-label-secondary); font:inherit; font-size:10.5px; line-height:18px; cursor:pointer; white-space:nowrap; }
+      .wt-head-btn:hover:not(:disabled) { color:var(--dsw-alias-label-primary); border-color:var(--dsw-alias-border-l2); }
+      .wt-head-btn:disabled { opacity:.5; cursor:default; }
+      .wt-head-btn:focus-visible { outline:2px solid var(--dsw-alias-brand-primary); outline-offset:-1px; }
       .wt-head-stat + .wt-head-stat::before { content:'·'; margin-right:6px; opacity:.5; }
       .wt-seg { display:flex; align-items:stretch; gap:2px; height:28px; min-height:28px; padding:0 6px; box-sizing:border-box; border-bottom:0.5px solid var(--dsw-alias-border-l1); }
       .wt-seg-btn { flex:none; font:inherit; font-size:11px; padding:0 8px; border:0; border-bottom:2px solid transparent; background:transparent; color:var(--dsw-alias-label-secondary); cursor:pointer; }
@@ -703,6 +880,9 @@ window.__ModuleLoader__.load({
       .wt-st-waiting .wt-fig-body { animation:wt-wait 1.8s ease-in-out infinite; }
       .wt-st-error .wt-fig-body { animation:wt-shake .55s ease-in-out infinite; }
       .wt-st-failed .wt-fig { opacity:.55; }
+      /* Benched keeps the figure (the seat is taken) but greys it and drops every
+         idle tell, so 「人在但停工」 never reads as merely idle. */
+      .wt-st-benched .wt-fig { opacity:.5; filter:grayscale(.7); }
       .wt-fig-body { transform-box:fill-box; transform-origin:50% 100%; }
       /* A giver leaves and returns without a cut, and the 3deg nod pose eases
          back to upright instead of snapping. Animations win over transitions, so
@@ -765,7 +945,17 @@ window.__ModuleLoader__.load({
       .wt-task p { margin:0; font-size:11px; line-height:1.5; color:var(--dsw-alias-label-secondary); white-space:pre-wrap; }
       .wt-task-meta { display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:10px; color:var(--dsw-alias-label-secondary); }
       .wt-task-warning { color:var(--dsw-alias-state-warn-primary); }
+      /* Awaiting acceptance: same warn colour as the warnings beside it, tinted
+         so the badge reads as a state rather than as warning prose. */
+      .wt-task-accept { padding:0 5px; border-radius:999px; font-weight:600; color:var(--dsw-alias-state-warn-primary); background:color-mix(in srgb, var(--dsw-alias-state-warn-primary) 14%, transparent); }
       .wt-task-empty { padding:14px 10px; border:0.5px dashed var(--dsw-alias-border-l2); border-radius:9px; color:var(--dsw-alias-label-secondary); font-size:11px; line-height:1.5; }
+      /* 0.2.2 keeps agentTeam as a task board behind a host-owned enabled flag.
+         With the flag off the three columns would be empty and the panel would
+         offer no way back, so the tab says why and carries the switch. */
+      .wt-board-off { display:flex; flex-direction:column; align-items:flex-start; gap:10px; padding:16px 12px; border:0.5px dashed var(--dsw-alias-border-l2); border-radius:11px; color:var(--dsw-alias-label-secondary); }
+      .wt-board-off-hint { font-size:11.5px; line-height:1.6; }
+      .wt-board-off-enable { color:var(--dsw-alias-label-primary); }
+      .wt-board-off-frozen { margin-top:12px; }
       /* The team page follows the Models page frame: a 720px column with a 16px
          title and a 14px tertiary intro, then the groups at the settings scale
          (13–14px, not the old 380px drawer's 11px). The shell owns scrolling. */
@@ -828,6 +1018,9 @@ window.__ModuleLoader__.load({
       .wt-dispatch-row.active { background:var(--dsw-alias-interactive-bg-active); }
       .wt-dispatch-row.active::before { content:''; position:absolute; left:2px; top:calc(50% - 12px); width:2px; height:24px; border-radius:2px; background:var(--dsw-alias-brand-primary); }
       .wt-dispatch-row.idle { cursor:default; opacity:.7; }
+      /* Benched candidates stay selectable — the Host refuses and explains — but
+         the row is dimmed like an idle one so the label is not a surprise. */
+      .wt-dispatch-row.benched .wt-dispatch-name { color:var(--dsw-alias-label-secondary); }
       .wt-dispatch-row.idle:hover { background:transparent; }
       .wt-dispatch-id { display:flex; flex-direction:column; gap:1px; min-width:0; flex:1; }
       .wt-dispatch-name { font-size:12px; font-weight:600; line-height:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -1043,6 +1236,120 @@ window.__ModuleLoader__.load({
       return `${(amount / 1_000_000).toFixed(1)}m`;
     }
 
+    /** A duration the drawer can print: seconds under a minute, then minutes/hours. */
+    function formatDuration(ms) {
+      const amount = Math.max(0, Math.trunc(sameNumber(ms)));
+      if (amount < 1000) return '0s';
+      const seconds = Math.round(amount / 1000);
+      if (seconds < 60) return `${seconds}s`;
+      const minutes = Math.round(seconds / 60);
+      if (minutes < 60) return `${minutes}m`;
+      return `${Math.round(minutes / 60)}h`;
+    }
+
+    /**
+     * The drawer's rows, from the readings that actually exist.
+     *
+     * Every value is either a projection (`tokenUsage`), the poller's own sample
+     * (`subagentTiming` → `settledMs`, `modelSelection` → `model`), or the board
+     * row. Nothing here invents a timestamp: no event projection is registered
+     * today, so the row reports that state instead of claiming the team had no
+     * activity — the day one exists, the copy is already true.
+     *
+     * @param {{model?: string, usage?: number, task?: string, measured?: boolean, settledMs?: number}} reading - raw readings.
+     * @param {(key: string) => string} t - locale lookup.
+     * @returns {{model: object, usage: object, task: object, activity: object, events: object}} display rows.
+     */
+    function drawerFacts(reading, t) {
+      const model = reading?.model;
+      const usage = sameNumber(reading?.usage);
+      const task = String(reading?.task ?? '');
+      return {
+        model:
+          model === undefined
+            ? { text: t('drawer.unknown'), empty: true }
+            : {
+                text: model === '' ? t('settings.followMain') : String(model).split('::').join(' / '),
+                empty: false,
+              },
+        usage: { text: formatTokens(usage), empty: usage <= 0 },
+        task: task === '' ? { text: t('drawer.none'), empty: true } : { text: task, empty: false },
+        activity:
+          reading?.measured === true
+            ? { text: `${t('drawer.settled')} ${formatDuration(reading.settledMs)}`, empty: false }
+            : { text: t('drawer.unknown'), empty: true },
+        events: { text: t('drawer.eventsNone'), empty: true },
+      };
+    }
+
+    /**
+     * Where Tab moves focus inside a modal, given the focusable node list.
+     *
+     * Pure so it can be asserted without a DOM: a modal that is
+     * `aria-modal="true"` must also be a keyboard island, and the wrap-around is
+     * the part that silently breaks (`index === count - 1` left unhandled walks
+     * out of the panel and behind the scrim). `-1` means "focus is outside the
+     * list", which lands on the first node going forward and the last going back.
+     *
+     * @param {number} count - focusable nodes inside the panel.
+     * @param {number} index - current node's index, or -1 when it is elsewhere.
+     * @param {boolean} shift - Shift+Tab.
+     * @returns {number} index to focus, or -1 when there is nothing to focus.
+     */
+    function focusCycle(count, index, shift) {
+      if (!Number.isFinite(count) || count <= 0) return -1;
+      const at = Number.isFinite(index) ? Math.trunc(index) : -1;
+      if (shift === true) return at <= 0 ? count - 1 : at - 1;
+      return at < 0 || at >= count - 1 ? 0 : at + 1;
+    }
+
+    /**
+     * The node Tab should land on, from the panel's own focusable list.
+     *
+     * @param {ArrayLike<object>} nodes - focusable nodes in DOM order.
+     * @param {object|null} current - the focused node.
+     * @param {boolean} shift - Shift+Tab.
+     * @returns {object|null} the node to focus, or null when the list is empty.
+     */
+    function focusStep(nodes, current, shift) {
+      const list = nodes === null || nodes === undefined ? [] : Array.from(nodes);
+      const index = current === null || current === undefined ? -1 : list.indexOf(current);
+      const next = focusCycle(list.length, index, shift === true);
+      return next < 0 ? null : list[next] ?? null;
+    }
+
+    /** A token count the panel can print: whole, never negative, 0 for junk. */
+    function wholeTokens(value) {
+      const number = Number(value);
+      return Number.isFinite(number) && number > 0 ? Math.trunc(number) : 0;
+    }
+
+    /**
+     * The office's budget reading, from the Host's `budget` block.
+     *
+     * The kernel's `agentTeam` projection is `{ enabled, tasks, failure }` — it
+     * carries no budget block, and this plugin registers no projection of its
+     * own, so `projected` is never populated today: the `projected` branches are
+     * kept for forward compatibility only, and the fallback is the live path.
+     * The fallback is not a guess: it is the same sum and the same two Config
+     * values (`teamTokenBudget`, `tokenBudgetOnExceed`) the Host measured, read
+     * off the settings form the panel already subscribes to. Normalisation copies
+     * lib/budget.js — a missing or unparsable limit is 0 (no ceiling), and only
+     * a real ceiling that usage has reached counts as exceeded — so a junk value
+     * can never turn into a limit nobody configured.
+     *
+     * @param {{used?: number, limit?: number, mode?: string, exceeded?: boolean}|undefined} projected - Host block.
+     * @param {{used?: number, limit?: number, mode?: string}|undefined} fallback - recomputed inputs.
+     * @returns {{used: number, limit: number, mode: 'warn'|'block', exceeded: boolean}} budget reading.
+     */
+    function readBudget(projected, fallback) {
+      const used = projected?.used === undefined ? wholeTokens(fallback?.used) : wholeTokens(projected.used);
+      const limit = projected?.limit === undefined ? wholeTokens(fallback?.limit) : wholeTokens(projected.limit);
+      const mode = (projected?.mode ?? fallback?.mode) === 'block' ? 'block' : 'warn';
+      const exceeded = typeof projected?.exceeded === 'boolean' ? projected.exceeded : limit > 0 && used >= limit;
+      return { used, limit, mode, exceeded };
+    }
+
     /**
      * Host projection values reach the client on two paths: the Session summary
      * row (`byId[id].projectionValues`, which the shipped Subagent panel reads)
@@ -1053,6 +1360,332 @@ window.__ModuleLoader__.load({
     function projectionOf(state, sessionId, key) {
       const fromSummary = state.byId[sessionId]?.projectionValues?.[key];
       return fromSummary ?? state.projectionsBySession[sessionId]?.values?.[key];
+    }
+
+    /**
+     * The team's spend: the Lead's own Session plus the roster's total.
+     *
+     * This is `measureBudget` in index.js, and the omission it used to have here
+     * was a real defect: the roster hook drops the Lead, so summing members alone
+     * always under-reported, and a team the Host had already blocked showed as
+     * under budget. The Lead reading is the first argument rather than something
+     * the caller may forget, and both sides go through the same four token keys.
+     *
+     * @param {{uncachedInputTokens?: number, outputTokens?: number, cacheReadTokens?: number, cacheWriteTokens?: number}|number|undefined} leadTotals - the Lead Session's `tokenUsage` value.
+     * @param {number} memberTokens - already-summed roster usage.
+     * @returns {number} lifetime tokens for the whole team.
+     */
+    function teamTokenTotal(leadTotals, memberTokens) {
+      return sumTokens(leadTotals) + wholeTokens(memberTokens);
+    }
+
+    /** Mirrors lib/acceptance.js: the gate's own review tasks carry this prefix. */
+    const REVIEW_SUBJECT_PREFIX = '审查：';
+    /**
+     * The Host-written scope marker on a review task. Mirrored, not invented:
+     * 老后 writes it into `writeScopes` when the gate files a review, which the
+     * kernel projection exposes as a plain string array.
+     */
+    const REVIEW_SCOPE_PREFIX = 'work-team/review/';
+
+    /**
+     * Whether one board task is the gate's own review rather than real work.
+     *
+     * Two signals, in this order. The scope marker is the collision-proof one:
+     * `writeScopes` is a generated namespace, so no employee can accidentally
+     * name a real task `work-team/review/...`. The subject prefix stays as the
+     * fallback for review tasks filed before that marker existed.
+     *
+     * The owner is deliberately NOT a signal: the reviewer also receives
+     * ordinary work that the Lead must still accept, and a review task filed
+     * before the reviewer was hired has no owner at all. Reading the owner here
+     * is what split this queue from `team_status.pendingAcceptance`.
+     *
+     * @param {object} task - `agentTeam.tasks` row.
+     * @returns {boolean} true for a gate-filed review task.
+     */
+    function isReviewTask(task) {
+      const scopes = Array.isArray(task?.writeScopes) ? task.writeScopes : [];
+      if (scopes.some((scope) => typeof scope === 'string' && scope.startsWith(REVIEW_SCOPE_PREFIX))) {
+        return true;
+      }
+      return String(task?.subject ?? '').startsWith(REVIEW_SUBJECT_PREFIX);
+    }
+
+    /**
+     * The acceptance queue, derived from the board with the Host's own rule.
+     *
+     * `team_status` publishes this list, but the kernel's `agentTeam` projection
+     * has no such field (it carries `{ enabled, tasks, failure }` only), so this
+     * derivation is the path that actually renders. It must therefore match
+     * `index.js` exactly: an in-progress task, owned by a named teammate of this
+     * roster, that is not one of the gate's review tasks — a review task is
+     * paperwork for `accept_task`, never work waiting to be accepted.
+     *
+     * @param {object[]} tasks - `agentTeam.tasks` rows.
+     * @param {Set<string>} memberNames - roster names, the Lead excluded.
+     * @returns {{id: string, subject: string, owner: string}[]} queue rows.
+     */
+    function acceptanceQueue(tasks, memberNames) {
+      const queue = [];
+      for (const task of tasks) {
+        if (task?.status !== 'in_progress') continue;
+        const owner = typeof task.ownerName === 'string' ? task.ownerName : '';
+        if (owner === '' || !memberNames.has(owner)) continue;
+        if (isReviewTask(task)) continue;
+        queue.push({ id: task.id, subject: task.subject, owner });
+      }
+      return queue;
+    }
+
+    /**
+     * Short names the Host also accepts in `benchRoles`.
+     *
+     * Mirrors `ROLE_ALIASES` in lib/roles.js, which is not exported — the test
+     * reads both tables and fails if they drift. Without this the panel would
+     * bench a role the Host still dispatches to (or the other way round).
+     */
+    const ROLE_ALIASES = new Map([
+      ['product', 'pm'],
+      ['product-manager', 'pm'],
+      ['front-end', 'frontend'],
+      ['fe', 'frontend'],
+      ['back-end', 'backend'],
+      ['be', 'backend'],
+      ['qa', 'reviewer'],
+      ['review', 'reviewer'],
+      ['research', 'researcher'],
+      ['design', 'designer'],
+      ['ui', 'designer'],
+      ['devops', 'ops'],
+      ['sre', 'ops'],
+      ['copywriter', 'writer'],
+      ['copy', 'writer'],
+    ]);
+
+    /**
+     * Resolve one bench token to a role id, exactly as `roleForName` does on the
+     * Host: an id or one of the short aliases. Display names are deliberately
+     * NOT accepted — the Host does not accept them, and a panel that did would
+     * paint 停职 on a seat the Host keeps dispatching to.
+     *
+     * @param {unknown} token - one split token.
+     * @param {object[]} roles - the mirrored ROLES table (explicit for testing).
+     * @returns {string} role id, or '' when the token names no role.
+     */
+    function roleIdOf(token, roles) {
+      const needle = String(token ?? '').trim().toLowerCase();
+      if (needle === '') return '';
+      const direct = roles.some((role) => role.id === needle);
+      if (direct) return needle;
+      const target = ROLE_ALIASES.get(needle);
+      if (target === undefined) return '';
+      return roles.some((role) => role.id === target) ? target : '';
+    }
+
+    /**
+     * Role ids on the bench, from the `benchRoles` Config string.
+     *
+     * Same separators, same aliases, same return shape as `lib/bench.js`:
+     * `{,，、;；\s}` splits, duplicates collapse, and an unrecognised token is
+     * reported instead of dropped, because a typo must not look like it benched
+     * somebody. The Host renders that `unknown` list; the panel only needs
+     * `roles`, but keeping the shape lets the two parsers be compared directly.
+     *
+     * @param {unknown} raw - Config value.
+     * @param {object[]} [roles] - the mirrored ROLES table.
+     * @returns {{roles: string[], unknown: string[]}} resolved ids in input order, plus unparsable tokens.
+     */
+    function parseBenchRoles(raw, roles = ROLES) {
+      const text = typeof raw === 'string' ? raw : '';
+      const ids = [];
+      const unknown = [];
+      for (const token of text.split(/[,，、;；\s]+/u)) {
+        const name = token.trim();
+        if (name === '') continue;
+        const id = roleIdOf(name, roles);
+        if (id === '') {
+          if (!unknown.includes(name)) unknown.push(name);
+          continue;
+        }
+        if (!ids.includes(id)) ids.push(id);
+      }
+      return { roles: ids, unknown };
+    }
+
+    /**
+     * Whether one roster member is on the bench.
+     *
+     * Keyed by the member's roster name, which is the role id for the built-in
+     * line-up; the roster hook already dropped the Lead, so a bench entry can
+     * never hit the main conversation.
+     *
+     * @param {object|null} member - roster row.
+     * @param {Set<string>} bench - role ids from `parseBenchRoles`.
+     * @returns {boolean} true when this seat takes no new work.
+     */
+    function isBenched(member, bench) {
+      if (member === null || member === undefined) return false;
+      return bench.has(member.name);
+    }
+
+    /** The Config field that carries one role's permission preset. */
+    function presetFieldOf(roleId) {
+      if (roleId === 'reviewer') return 'presetReviewer';
+      if (roleId === 'researcher') return 'presetResearcher';
+      if (roleId === 'ops') return 'presetOps';
+      return '';
+    }
+
+    /** One configured preset, trimmed; '' means the plugin does not take over. */
+    function presetLabel(preset) {
+      return typeof preset === 'string' ? preset.trim() : '';
+    }
+
+    /**
+     * The preset configured for one role.
+     *
+     * `team_status.members[].preset` carries the value the Host actually applied,
+     * but no projection exposes it, so the panel shows the same Config value the
+     * Host switches from — and never invents a name.
+     *
+     * @param {string} roleId - role id.
+     * @param {object} config - settings form value.
+     * @returns {string} preset name, or '' for "hands off".
+     */
+    function presetOf(roleId, config) {
+      const field = presetFieldOf(roleId);
+      return field === '' ? '' : presetLabel(config?.[field]);
+    }
+
+    /** What the settings field shows for a preset: the name, or the hands-off word. */
+    function presetDisplay(preset, t) {
+      const name = presetLabel(preset);
+      return name === '' ? t('settings.preset.none') : name;
+    }
+
+    /** `subject` ceiling the Team service enforces on `createTask`. */
+    const TASK_SUBJECT_LIMIT = 200;
+
+    /**
+     * The body of `createTask`, or why it cannot be sent.
+     *
+     * Shape mirrors `CreateTeamTaskRequest` in the kernel: subject, description
+     * (both required strings), and an optional `writeScopes` array. Scopes are
+     * trimmed, de-duplicated and empty entries dropped, because the board stores
+     * them verbatim and a blank scope would claim "touches everything".
+     *
+     * @param {{subject?: unknown, description?: unknown, writeScopes?: unknown}} draft - form values.
+     * @param {string} [fallbackDescription] - description to use when the field is blank.
+     * @returns {{ok: true, payload: {subject: string, description: string, writeScopes: string[]}} | {ok: false, reason: 'subject-empty'|'subject-long'}} result.
+     */
+    function createTaskPayload(draft, fallbackDescription = '') {
+      const subject = String(draft?.subject ?? '').trim();
+      if (subject === '') return { ok: false, reason: 'subject-empty' };
+      if (Array.from(subject).length > TASK_SUBJECT_LIMIT) return { ok: false, reason: 'subject-long' };
+      const description = String(draft?.description ?? '').trim() || fallbackDescription;
+      const scopes = [];
+      for (const raw of String(draft?.writeScopes ?? '').split(/[,\u3001\uFF0C\s]+/)) {
+        const scope = raw.trim();
+        if (scope === '' || scopes.includes(scope)) continue;
+        scopes.push(scope);
+      }
+      return { ok: true, payload: { subject, description, writeScopes: scopes } };
+    }
+
+    /**
+     * What a `reassign` / `claim` update body looks like on each backend.
+     *
+     * This is the written record, not a call path: the panel writes nothing any
+     * more (assignment is a queued sentence the Lead executes), so nothing in
+     * client.js invokes it. It is kept — and pinned by tests — because the two
+     * backends disagree about `owner` (0.2.2 wants the child **Session id**,
+     * 0.2.1 wants the **member name**) and that is the trap the next person
+     * would fall into when reading the queue request. An unknown topology
+     * returns null: guessing would name a session that does not exist.
+     *
+     * @param {'team-service'|'subagent-tree'|'unknown'} topology - which backend answered.
+     * @param {{id?: string, revision?: number}} task - board row (revision is the CAS token).
+     * @param {{id?: string, name?: string}} member - roster row the work goes to.
+     * @returns {{taskId: string, expectedRevision: number, action: 'reassign', owner: string} | null} update body.
+     */
+    function reassignPayload(topology, task, member) {
+      if (topology !== 'team-service' && topology !== 'subagent-tree') return null;
+      const taskId = typeof task?.id === 'string' ? task.id : '';
+      const owner = topology === 'subagent-tree' ? member?.id : member?.name;
+      if (taskId === '' || typeof owner !== 'string' || owner === '') return null;
+      return {
+        taskId,
+        expectedRevision: Number.isFinite(task?.revision) ? Number(task.revision) : 1,
+        action: 'reassign',
+        owner,
+      };
+    }
+
+    /**
+     * The sentence that asks the Lead to run `accept_task`.
+     *
+     * The client never completes a task itself: acceptance is the Lead's tool and
+     * it requires evidence. This builds the queue request in the one shape the
+     * Lead reads — `验收 <taskId>，证据：<原文>` — and refuses blank evidence, so a
+     * one-click "done" cannot exist.
+     *
+     * @param {string} taskId - shared task id.
+     * @param {string} evidence - what was verified.
+     * @returns {{ok: true, text: string} | {ok: false, reason: 'task'|'evidence'}} request or refusal.
+     */
+    function acceptanceRequest(taskId, evidence) {
+      const id = String(taskId ?? '').trim();
+      const body = String(evidence ?? '').trim();
+      if (id === '') return { ok: false, reason: 'task' };
+      if (body === '') return { ok: false, reason: 'evidence' };
+      return { ok: true, text: `验收 ${id}，证据：${body}` };
+    }
+
+    /**
+     * The sentence that asks the Lead to create a task with `team_task_create`.
+     *
+     * Same pipe as acceptance: the panel writes nothing, it queues one request and
+     * the Lead's tool is the only writer. The submit confirmation therefore says
+     * "handed over", never "created" — the board has not changed yet, and it may
+     * never change if the Lead's call fails.
+     *
+     * @param {{subject?: unknown, description?: unknown, writeScopes?: unknown}} draft - composer values.
+     * @returns {{ok: true, text: string} | {ok: false, reason: string}} request or refusal.
+     */
+    function createTaskRequest(draft) {
+      const built = createTaskPayload(draft);
+      if (built.ok !== true) return built;
+      const lines = [`建任务 ${built.payload.subject}`];
+      if (built.payload.description !== '') lines.push(`描述：${built.payload.description}`);
+      if (built.payload.writeScopes.length > 0) {
+        lines.push(`涉及文件：${built.payload.writeScopes.join('、')}`);
+      }
+      lines.push('用 team_task_create 建，写清验收标准与涉及文件。');
+      return { ok: true, text: lines.join('\n') };
+    }
+
+    /**
+     * The sentence that asks the Lead to move a task to one teammate.
+     *
+     * The name is the human one, with the role id in parentheses when the two
+     * differ: the Lead resolves topology itself (`team_task_update` needs a child
+     * Session id on 0.2.2 and a member name on 0.2.1), and a raw session id in a
+     * user-facing sentence would be noise it can derive. `reassignPayload` below
+     * stays as the written record of that difference.
+     *
+     * @param {string} taskId - shared task id.
+     * @param {{name?: string, label?: string}} member - roster row (id/name) plus its display label.
+     * @returns {{ok: true, text: string} | {ok: false, reason: 'task'|'owner'}} request or refusal.
+     */
+    function assignTaskRequest(taskId, member) {
+      const id = String(taskId ?? '').trim();
+      const name = typeof member?.name === 'string' ? member.name.trim() : '';
+      if (id === '') return { ok: false, reason: 'task' };
+      if (name === '') return { ok: false, reason: 'owner' };
+      const label = typeof member?.label === 'string' ? member.label.trim() : '';
+      const who = label === '' || label === name ? name : `${label}（${name}）`;
+      return { ok: true, text: `把 ${id} 指派给 ${who}，用 team_task_update 的 reassign 改派。` };
     }
 
     /**
@@ -1073,7 +1706,15 @@ window.__ModuleLoader__.load({
      * best signal left.
      */
     function deriveStatus(member, signals) {
+      // A broken employee outranks the bench: benching is a staffing decision,
+      // a failed Session is the thing the Lead has to see first. The bench flag
+      // still rides along on the row (`data-wt-benched`), so the two facts are
+      // not exclusive — only the status word is.
       if (member?.phase === 'failed') return 'failed';
+      // The bench then outranks every activity signal: a benched employee keeps a
+      // Session (and may still own unfinished work the Lead can accept), but is
+      // not taking new tasks, so 「working」 would promise the wrong thing.
+      if (signals.benched === true) return 'benched';
       if (member?.phase === 'provisioning') return 'provisioning';
       if (signals.pending === true) return 'waiting';
       const timing = signals.timing;
@@ -1109,6 +1750,74 @@ window.__ModuleLoader__.load({
       return 'idle';
     }
 
+    /**
+     * The roster, from whichever projection this host still carries.
+     *
+     * 0.2.1's `agentTeam` projection was `{ members, tasks, failure }`; 0.2.2 is
+     * `{ enabled, tasks, failure }` and the team itself lives in the subagent
+     * tree, so `members` is `undefined` there. Reading it anyway is why the dock
+     * hid itself (an empty roster is "no office") and the office drew eight
+     * vacancies for a team that was already hired.
+     *
+     * `subagentCatalog` is the surviving source: this plugin spawns every
+     * employee as a named, continuable child whose name is the role id, so a row
+     * whose `name` is a known role is an employee. Nothing is invented — an
+     * unnamed row, an unknown name, and a row that is not `continuable` are all
+     * dropped — and catalog order is kept, so a seat never moves between
+     * renders.
+     *
+     * Only `continuable` counts. An `external` child runs outside this machine
+     * with no local child Session, so seating it would draw a desk whose chat
+     * cannot open and whose dispatch the kernel refuses as NOT_CONTINUABLE; a
+     * `one-shot` worker is a temporary hand, not a seat.
+     */
+    function memberRows(team, catalog) {
+      if (team !== null && typeof team === 'object' && Array.isArray(team.members)) {
+        // 0.2.1: the host still owns the roster, phases and all.
+        return team.members.filter(
+          (member) => member !== null && typeof member === 'object' && member.role !== 'lead',
+        );
+      }
+      if (!Array.isArray(catalog)) return [];
+      const rows = [];
+      for (const entry of catalog) {
+        if (entry === null || typeof entry !== 'object') continue;
+        // `external` has no local child Session and `one-shot` no seat at all;
+        // `unknown` is a historical child whose mode the host cannot resolve.
+        if (entry.mode !== 'continuable') continue;
+        const name = typeof entry.name === 'string' ? entry.name : '';
+        const role = ROLE_BY_ID.get(name);
+        // A row without an id cannot be keyed, opened, or watched.
+        if (role === undefined || typeof entry.id !== 'string' || entry.id === '') continue;
+        rows.push({
+          id: entry.id,
+          name,
+          role: 'teammate',
+          // The tree has no provisioning/failed phases: a hired employee is a
+          // live child, and the runtime store is what decides its live status.
+          phase: undefined,
+          status: 'inactive',
+          description: role.zh.role,
+        });
+      }
+      return rows;
+    }
+
+    /**
+     * The live roster of one session surface. `agentTeam` supplies 0.2.1's
+     * members (and, on both versions, the task board); `subagentCatalog`
+     * supplies 0.2.2's. The Lead is never a seat on any surface, so it is
+     * dropped once here instead of at each of the four call sites.
+     */
+    function useRoster(useProjection) {
+      const team = useProjection('agentTeam');
+      const catalog = useProjection('subagentCatalog');
+      return useMemo(
+        () => memberRows(team, catalog).filter((member) => member?.role !== 'lead'),
+        [team, catalog],
+      );
+    }
+
     /** Team members outside the mirrored roster still need an avatar palette. */
     function roleOrFallback(member) {
       const name = String(member?.name ?? '');
@@ -1120,6 +1829,23 @@ window.__ModuleLoader__.load({
           palette: { accent: '#7c8798', soft: '#e9edf3', hair: '#2b3038', skin: '#d9b08c' },
         }
       );
+    }
+
+    /**
+     * Role ids on the bench, straight off the team Config.
+     *
+     * `benchRoles` is a Config string, not a projection: every surface that draws
+     * a status reads it from the same form snapshot the settings panel writes, so
+     * the office and the settings never disagree about who is benched. The Set is
+     * memoized on the raw string, so a re-render does not churn props.
+     *
+     * @param {object} form - the team settings form.
+     * @returns {Set<string>} benched role ids.
+     */
+    function useBenchRoles(form) {
+      const snapshot = useFormSnapshot(form);
+      const raw = snapshot.value?.benchRoles;
+      return useMemo(() => new Set(parseBenchRoles(raw).roles), [raw]);
     }
 
     /** Replace `{key}` placeholders without pulling in a formatter. */
@@ -1730,6 +2456,38 @@ window.__ModuleLoader__.load({
           reference?.release();
         } catch {
           // Releasing twice or after teardown must not mask the dispatch result.
+        }
+      }
+    }
+
+    /**
+     * Queue one message into the Lead's own Session.
+     *
+     * Same `queue` channel `dispatchTask` uses for a teammate: the request lands
+     * as a user turn on the current conversation, which is the only place that
+     * can run a Host tool. Retained by session id rather than through the member
+     * address, because the Lead is not a child.
+     *
+     * @param {object} ctx - client host context.
+     * @param {string} sessionId - the pane's Session.
+     * @param {string} text - the sentence to queue.
+     * @returns {Promise<true>} resolves once the Host accepted the prompt.
+     */
+    async function queueLeadPrompt(ctx, sessionId, text) {
+      const body = String(text ?? '').trim();
+      if (body === '') throw new Error('empty request');
+      if (!sessionId) throw new Error('missing session identity');
+      const reference = ctx.sessions.retain(sessionId, { source: 'controllerOperation' });
+      try {
+        await reference.ready;
+        const result = await reference.binding.session.prompt([{ type: 'text', text: body }], 'queue');
+        if (result?.ok === false) throw new Error(errorText(result.error));
+        return true;
+      } finally {
+        try {
+          reference.release();
+        } catch {
+          // A release after teardown must not mask the prompt result.
         }
       }
     }
@@ -2436,8 +3194,10 @@ window.__ModuleLoader__.load({
       t,
       handoff,
       sparkle,
+      benched,
       onOpen,
       onStop,
+      onDetails,
       useSessions,
       useSessionStatus,
     }) {
@@ -2452,10 +3212,11 @@ window.__ModuleLoader__.load({
             running: running ?? summaryRunning,
             pending,
             unread,
+            benched: benched === true,
             timing: memberRuntime.runtimeOf(member.id),
             ack: memberRuntime.ackOf(member.id),
           }),
-        [member, running, summaryRunning, pending, unread, runtimeVersion],
+        [member, running, summaryRunning, pending, unread, benched, runtimeVersion],
       );
       const roleInfo = roleOrFallback(member);
       const display = roleInfo.zh.name;
@@ -2474,6 +3235,7 @@ window.__ModuleLoader__.load({
           role: 'group',
           'aria-label': display,
           'data-wt-member': member.id,
+          'data-wt-benched': benched === true ? 'true' : undefined,
           'data-wt-handoff': handoff === undefined ? undefined : handoff.kind,
           title: `${display} · ${subline} · ${statusText}`,
           // Pointer fallback only: the stretched hit button below takes every real
@@ -2497,6 +3259,23 @@ window.__ModuleLoader__.load({
           h('span', { className: 'wt-row-name' }, display),
           h('span', { className: 'wt-row-role' }, subline),
         ),
+        onDetails === undefined
+          ? null
+          : h(
+              'button',
+              {
+                type: 'button',
+                className: 'wt-row-info',
+                'aria-label': fillCopy(t('drawer.open'), { name: display }),
+                title: t('drawer.openTitle'),
+                onClick: (event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onDetails(member);
+                },
+              },
+              'i',
+            ),
         stoppable
           ? h(
               'button',
@@ -2595,8 +3374,10 @@ window.__ModuleLoader__.load({
       t,
       handoff,
       sparkle,
+      benched,
       onOpen,
       onStop,
+      onDetails,
       useSessions,
       useSessionStatus,
       index,
@@ -2616,10 +3397,11 @@ window.__ModuleLoader__.load({
             running: running ?? summaryRunning,
             pending,
             unread,
+            benched: benched === true,
             timing: memberRuntime.runtimeOf(member.id),
             ack: memberRuntime.ackOf(member.id),
           }),
-        [member, running, summaryRunning, pending, unread, runtimeVersion],
+        [member, running, summaryRunning, pending, unread, benched, runtimeVersion],
       );
       const roleInfo = roleOrFallback(member);
       const display = roleInfo.zh.name;
@@ -2639,6 +3421,7 @@ window.__ModuleLoader__.load({
           className: `wt-desk wt-st-${status}`,
           'data-side': side,
           'data-wt-status': status,
+          'data-wt-benched': benched === true ? 'true' : undefined,
           'data-wt-absent': absent ? 'true' : undefined,
           'data-wt-receive': receive ? 'true' : undefined,
           role: 'group',
@@ -2665,6 +3448,25 @@ window.__ModuleLoader__.load({
             open();
           },
         }),
+        // Details is read-only and additive: the desk's own click still opens the
+        // chat, so the drawer never replaces the path people already use.
+        onDetails === undefined
+          ? null
+          : h(
+              'button',
+              {
+                type: 'button',
+                className: 'wt-desk-info',
+                'aria-label': fillCopy(t('drawer.open'), { name: display }),
+                title: t('drawer.openTitle'),
+                onClick: (event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onDetails(member);
+                },
+              },
+              'i',
+            ),
         stoppable
           ? h(
               'button',
@@ -2771,6 +3573,7 @@ window.__ModuleLoader__.load({
       sparkles,
       onOpen,
       onStop,
+      onDetails,
       useSessions,
       useSessionStatus,
     }) {
@@ -2964,10 +3767,12 @@ window.__ModuleLoader__.load({
                     member: item.member,
                     task: item.task,
                     t,
+                    benched: item.benched === true,
                     handoff: handoffs === undefined ? undefined : handoffs.get(item.member.name),
                     sparkle: sparkles !== undefined && sparkles.has(item.member.name),
                     onOpen,
                     onStop,
+                    onDetails,
                     useSessions,
                     useSessionStatus,
                     index: i,
@@ -3146,16 +3951,18 @@ window.__ModuleLoader__.load({
             running: running ?? summaryRunning,
             pending,
             unread,
+            benched: entry.benched === true,
             timing: memberRuntime.runtimeOf(memberId),
             ack: memberRuntime.ackOf(memberId),
           }),
-        [entry.member, memberId, running, summaryRunning, pending, unread, runtimeVersion],
+        [entry.member, entry.benched, memberId, running, summaryRunning, pending, unread, runtimeVersion],
       );
       const idle = entry.member === null;
       return h(
         'div',
         {
-          className: `wt-dispatch-row${active ? ' active' : ''}${idle ? ' idle' : ''}`,
+          className: `wt-dispatch-row${active ? ' active' : ''}${idle ? ' idle' : ''}${status === 'benched' ? ' benched' : ''}`,
+          'data-wt-benched': entry.benched === true ? 'true' : undefined,
           role: 'option',
           id: `wt-dispatch-option-${entry.key}`,
           'aria-selected': active ? 'true' : 'false',
@@ -3201,6 +4008,7 @@ window.__ModuleLoader__.load({
     function DispatchOverlay(props) {
       const {
         sessionId,
+        form,
         useInput,
         inputActions,
         useProjection,
@@ -3210,7 +4018,6 @@ window.__ModuleLoader__.load({
         dispatch,
       } = props;
       const draft = useInput((state) => state.draft);
-      const team = useProjection('agentTeam');
       const [stage, setStage] = useState('idle');
       const [target, setTarget] = useState(null);
       const [text, setText] = useState('');
@@ -3227,10 +4034,8 @@ window.__ModuleLoader__.load({
       const draftRef = useRef(draft);
       draftRef.current = draft;
 
-      const members = useMemo(
-        () => (team?.members ?? []).filter((member) => member.role !== 'lead'),
-        [team],
-      );
+      const members = useRoster(useProjection);
+      const bench = useBenchRoles(form);
       const typing = /^@(\S*)$/.exec(draft);
       const query = typing === null ? '' : typing[1];
       const entries = useMemo(() => {
@@ -3243,12 +4048,16 @@ window.__ModuleLoader__.load({
             key: member.id,
             member,
             role: roleOrFallback(member),
+            // Benched people stay dispatchable: the Host owns the refusal and
+            // explains it, so hiding them here would only leave the user guessing.
+            benched: isBenched(member, bench),
           }));
         const taken = new Set(members.map((member) => member.name));
         const vacant = ROLES.filter((role) => !taken.has(role.id)).map((role) => ({
           key: role.id,
           member: null,
           role,
+          benched: false,
         }));
         const all = [...hired, ...vacant];
         const needle = query.toLowerCase();
@@ -3264,7 +4073,7 @@ window.__ModuleLoader__.load({
             String(entry.member?.name ?? '').toLowerCase().includes(needle)
           );
         });
-      }, [members, query]);
+      }, [members, query, bench]);
       const selectable = useMemo(() => entries.filter((entry) => entry.member !== null), [entries]);
       /**
        * The official `ui-reference` menu occupies the same overlay slot on `@`,
@@ -3553,7 +4362,490 @@ window.__ModuleLoader__.load({
     // Task board
     // ---------------------------------------------------------------------
 
-    function TaskCard({ task, t, onOpen }) {
+    /**
+     * The acceptance dialog: evidence in, queue request out.
+     *
+     * The submit button is disabled while the field is blank, and the client has
+     * no path to mark a task completed by itself — this dialog only writes the
+     * sentence the Lead needs to run `accept_task`, which is the one gate v2.3
+     * built.
+     */
+    function AcceptDialog({ task, t, onClose, onSubmit }) {
+      const [evidence, setEvidence] = useState('');
+      const [stage, setStage] = useState('edit');
+      const [error, setError] = useState('');
+      const inputRef = useRef(null);
+      const body = evidence.trim();
+      const canSend = body !== '' && stage === 'edit';
+
+      useEffect(() => {
+        inputRef.current?.focus?.();
+      }, []);
+
+      useEffect(() => {
+        const onKeyDown = (event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            if (stage !== 'sending') onClose();
+          }
+        };
+        document.addEventListener('keydown', onKeyDown, true);
+        return () => document.removeEventListener('keydown', onKeyDown, true);
+      }, [onClose, stage]);
+
+      const send = () => {
+        if (!canSend) return;
+        setStage('sending');
+        setError('');
+        Promise.resolve()
+          .then(() => onSubmit(task.id, body))
+          .then(() => setStage('sent'))
+          .catch((reason) => {
+            // Never swallow a refusal: the Host's own words are the useful part.
+            setError(errorText(reason));
+            setStage('edit');
+          });
+      };
+
+      return ReactDOM.createPortal(
+        [
+          h('div', {
+            key: 'scrim',
+            className: 'wt-person-scrim',
+            'data-wt-accept-scrim': '',
+            'data-state': 'open',
+            'aria-hidden': 'true',
+            onClick: () => {
+              if (stage !== 'sending') onClose();
+            },
+          }),
+          h(
+            'div',
+            {
+              key: 'dialog',
+              className: 'wt-accept',
+              'data-wt-accept': 'true',
+              role: 'dialog',
+              'aria-modal': 'true',
+              'aria-label': t('task.acceptTitle'),
+            },
+            h('div', { className: 'wt-accept-title' }, t('task.acceptTitle')),
+            h('div', { className: 'wt-accept-hint' }, `${task.id} · ${task.subject}`),
+            h('textarea', {
+              ref: inputRef,
+              className: 'wt-accept-input',
+              value: evidence,
+              placeholder: t('task.acceptPlaceholder'),
+              'aria-label': t('task.acceptEvidence'),
+              disabled: stage === 'sending' || stage === 'sent',
+              onChange: (event) => setEvidence(event.target.value),
+              onKeyDown: (event) => {
+                if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+                  event.preventDefault();
+                  send();
+                }
+              },
+            }),
+            error === '' ? null : h('div', { className: 'wt-accept-error', role: 'alert' }, error),
+            h(
+              'div',
+              { className: 'wt-accept-row' },
+              stage === 'sent'
+                ? h('span', { className: 'wt-accept-sent', role: 'status' }, t('task.acceptSent'))
+                : null,
+              h(
+                'button',
+                { type: 'button', className: 'wt-btn', onClick: onClose, disabled: stage === 'sending' },
+                t('task.cancel'),
+              ),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'wt-btn',
+                  onClick: send,
+                  disabled: !canSend,
+                  'aria-disabled': canSend ? undefined : 'true',
+                },
+                stage === 'sending' ? '…' : t('task.acceptSend'),
+              ),
+            ),
+          ),
+        ],
+        document.body,
+      );
+    }
+
+    /**
+     * The assignment dialog: pick a teammate, queue the sentence.
+     *
+     * Like acceptance, this never writes the board. The card list carries the
+     * roster row id, and the request names the human (`老后（backend）`), because
+     * the Lead resolves which owner form its backend needs.
+     */
+    function AssignDialog({ task, members, t, onClose, onAssign }) {
+      const [stage, setStage] = useState('pick');
+      const [error, setError] = useState('');
+
+      useEffect(() => {
+        const onKeyDown = (event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            if (stage !== 'sending') onClose();
+          }
+        };
+        document.addEventListener('keydown', onKeyDown, true);
+        return () => document.removeEventListener('keydown', onKeyDown, true);
+      }, [onClose, stage]);
+
+      const pick = (member) => {
+        if (stage !== 'pick') return;
+        setStage('sending');
+        setError('');
+        Promise.resolve()
+          .then(() => onAssign(task.id, member.id))
+          .then(() => setStage('sent'))
+          .catch((reason) => {
+            setError(errorText(reason));
+            setStage('pick');
+          });
+      };
+
+      return ReactDOM.createPortal(
+        [
+          h('div', {
+            key: 'scrim',
+            className: 'wt-person-scrim',
+            'data-wt-accept-scrim': '',
+            'data-state': 'open',
+            'aria-hidden': 'true',
+            onClick: () => {
+              if (stage !== 'sending') onClose();
+            },
+          }),
+          h(
+            'div',
+            {
+              key: 'dialog',
+              className: 'wt-accept',
+              'data-wt-assign': task.id,
+              role: 'dialog',
+              'aria-modal': 'true',
+              'aria-label': t('task.assignTitle'),
+            },
+            h('div', { className: 'wt-accept-title' }, t('task.assignTitle')),
+            h('div', { className: 'wt-accept-hint' }, `${task.id} · ${task.subject}`),
+            members.length === 0
+              ? h('div', { className: 'wt-accept-hint' }, t('task.assignEmpty'))
+              : h(
+                  'div',
+                  { className: 'wt-accept-row', style: { flexWrap: 'wrap', justifyContent: 'flex-start' } },
+                  ...members.map((member) =>
+                    h(
+                      'button',
+                      {
+                        key: member.id,
+                        type: 'button',
+                        className: 'wt-btn',
+                        disabled: stage !== 'pick',
+                        onClick: () => pick(member),
+                      },
+                      roleOrFallback(member).zh.name,
+                    ),
+                  ),
+                ),
+            error === '' ? null : h('div', { className: 'wt-accept-error', role: 'alert' }, error),
+            h(
+              'div',
+              { className: 'wt-accept-row' },
+              stage === 'sent'
+                ? h('span', { className: 'wt-accept-sent', role: 'status' }, t('task.assignSent'))
+                : null,
+              h(
+                'button',
+                { type: 'button', className: 'wt-btn', onClick: onClose, disabled: stage === 'sending' },
+                t('task.cancel'),
+              ),
+            ),
+          ),
+        ],
+        document.body,
+      );
+    }
+
+    /**
+     * The create-task form. It queues one request — the board is written by the
+     * Lead's `team_task_create`, never here — so the confirmation says handed
+     * over, not created.
+     */
+    function TaskComposer({ t, onClose, onCreate }) {
+      const [subject, setSubject] = useState('');
+      const [description, setDescription] = useState('');
+      const [scopes, setScopes] = useState('');
+      const [stage, setStage] = useState('edit');
+      const [error, setError] = useState('');
+      const built = createTaskPayload({ subject, description, writeScopes: scopes });
+      const canSend = built.ok === true && stage === 'edit';
+      const inputRef = useRef(null);
+
+      useEffect(() => {
+        inputRef.current?.focus?.();
+      }, []);
+
+      useEffect(() => {
+        const onKeyDown = (event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            if (stage !== 'sending') onClose();
+          }
+        };
+        document.addEventListener('keydown', onKeyDown, true);
+        return () => document.removeEventListener('keydown', onKeyDown, true);
+      }, [onClose, stage]);
+
+      const send = () => {
+        if (!canSend) return;
+        setStage('sending');
+        setError('');
+        Promise.resolve()
+          .then(() => onCreate({ subject, description, writeScopes: scopes }))
+          .then(() => setStage('sent'))
+          .catch((reason) => {
+            setError(errorText(reason));
+            setStage('edit');
+          });
+      };
+
+      const overLong = built.ok !== true && built.reason === 'subject-long';
+
+      return ReactDOM.createPortal(
+        [
+          h('div', {
+            key: 'scrim',
+            className: 'wt-person-scrim',
+            'data-wt-accept-scrim': '',
+            'data-state': 'open',
+            'aria-hidden': 'true',
+            onClick: () => {
+              if (stage !== 'sending') onClose();
+            },
+          }),
+          h(
+            'div',
+            {
+              key: 'dialog',
+              className: 'wt-accept',
+              'data-wt-compose': 'true',
+              role: 'dialog',
+              'aria-modal': 'true',
+              'aria-label': t('task.createTitle'),
+            },
+            h('div', { className: 'wt-accept-title' }, t('task.createTitle')),
+            h('textarea', {
+              ref: inputRef,
+              className: 'wt-accept-input',
+              value: subject,
+              placeholder: t('task.createSubject'),
+              'aria-label': t('task.createSubject'),
+              disabled: stage !== 'edit',
+              onChange: (event) => setSubject(event.target.value),
+            }),
+            h('textarea', {
+              className: 'wt-accept-input',
+              value: description,
+              placeholder: t('task.createDescription'),
+              'aria-label': t('task.createDescription'),
+              disabled: stage !== 'edit',
+              onChange: (event) => setDescription(event.target.value),
+            }),
+            h('input', {
+              type: 'text',
+              className: 'wt-accept-input',
+              value: scopes,
+              placeholder: t('task.createScopes'),
+              'aria-label': t('task.createScopes'),
+              disabled: stage !== 'edit',
+              onChange: (event) => setScopes(event.target.value),
+            }),
+            overLong ? h('div', { className: 'wt-accept-error' }, t('task.createSubjectLong')) : null,
+            error === '' ? null : h('div', { className: 'wt-accept-error', role: 'alert' }, error),
+            h(
+              'div',
+              { className: 'wt-accept-row' },
+              stage === 'sent'
+                ? h('span', { className: 'wt-accept-sent', role: 'status' }, t('task.createQueued'))
+                : null,
+              h(
+                'button',
+                { type: 'button', className: 'wt-btn', onClick: onClose, disabled: stage === 'sending' },
+                t('task.cancel'),
+              ),
+              h(
+                'button',
+                { type: 'button', className: 'wt-btn', onClick: send, disabled: !canSend },
+                stage === 'sending' ? '…' : t('task.createSend'),
+              ),
+            ),
+          ),
+        ],
+        document.body,
+      );
+    }
+
+    /**
+     * The member drawer: read-only, everything from a projection or the poller.
+     *
+     * No event projection is registered for a teammate Session today, so the
+     * "recent events" row states that instead of inventing timestamps; the
+     * settled duration is the one real number that exists.
+     */
+    function MemberDrawer({ member, task, t, onClose, onOpenChat, useSessions }) {
+      const role = roleOrFallback(member);
+      const runtime = memberRuntime.runtimeOf(member.id);
+      const usage = useSessions((state) => sumTokens(projectionOf(state, member.id, 'tokenUsage')));
+      const facts = drawerFacts(
+        {
+          model: runtime?.model,
+          usage,
+          task,
+          measured: runtime?.measured === true,
+          settledMs: runtime?.settledMs,
+        },
+        t,
+      );
+      const rootRef = useRef(null);
+      const closeRef = useRef(null);
+
+      useEffect(() => {
+        closeRef.current?.focus?.();
+      }, []);
+
+      useEffect(() => {
+        const onKeyDown = (event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            onClose();
+          }
+        };
+        document.addEventListener('keydown', onKeyDown, true);
+        return () => document.removeEventListener('keydown', onKeyDown, true);
+      }, [onClose]);
+
+      // Tab stays inside the panel: `aria-modal` claims the rest of the page is
+      // inert, so the keyboard has to agree. The wrap itself is the pure
+      // `focusStep` above; this handler only reads the DOM and moves focus.
+      const trap = (event) => {
+        if (event.key !== 'Tab') return;
+        const root = rootRef.current;
+        if (root === null) return;
+        const nodes = [...root.querySelectorAll('button:not(:disabled), [tabindex]:not([tabindex="-1"])')];
+        const target = focusStep(nodes, document.activeElement, event.shiftKey === true);
+        event.preventDefault();
+        target?.focus?.();
+      };
+
+      return ReactDOM.createPortal(
+        [
+          h('div', {
+            key: 'scrim',
+            className: 'wt-person-scrim',
+            'data-wt-drawer-scrim': '',
+            'data-state': 'open',
+            'aria-hidden': 'true',
+            onClick: onClose,
+          }),
+          h(
+            'aside',
+            {
+              key: 'drawer',
+              className: 'wt-drawer',
+              'data-wt-drawer': member.id,
+              role: 'dialog',
+              'aria-modal': 'true',
+              'aria-label': fillCopy(t('drawer.title'), { name: role.zh.name }),
+              tabIndex: -1,
+              ref: rootRef,
+              onKeyDown: trap,
+            },
+            h(
+              'div',
+              { className: 'wt-drawer-head' },
+              h(RoleAvatar, { role, size: 40, status: 'idle', dot: false }),
+              h(
+                'div',
+                { className: 'wt-drawer-id' },
+                h('div', { className: 'wt-drawer-name' }, role.zh.name),
+                h('div', { className: 'wt-drawer-role' }, role.zh.role),
+              ),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'wt-person-x',
+                  ref: closeRef,
+                  'aria-label': t('drawer.close'),
+                  title: t('drawer.close'),
+                  onClick: onClose,
+                },
+                '×',
+              ),
+            ),
+            h('div', { className: 'wt-drawer-rule' }),
+            h(
+              'div',
+              { className: 'wt-drawer-sec' },
+              h('div', { className: 'wt-drawer-key' }, t('dock.cardModel')),
+              h('div', { className: 'wt-drawer-val', 'data-empty': facts.model.empty ? 'true' : undefined }, facts.model.text),
+            ),
+            h(
+              'div',
+              { className: 'wt-drawer-sec' },
+              h('div', { className: 'wt-drawer-key' }, t('dock.cardUsage')),
+              h('div', { className: 'wt-drawer-val', 'data-empty': facts.usage.empty ? 'true' : undefined }, facts.usage.text),
+            ),
+            h(
+              'div',
+              { className: 'wt-drawer-sec' },
+              h('div', { className: 'wt-drawer-key' }, t('dock.cardTask')),
+              h('div', { className: 'wt-drawer-val', 'data-empty': facts.task.empty ? 'true' : undefined }, facts.task.text),
+            ),
+            h(
+              'div',
+              { className: 'wt-drawer-sec' },
+              h('div', { className: 'wt-drawer-key' }, t('drawer.activity')),
+              h(
+                'div',
+                { className: 'wt-drawer-val', 'data-empty': facts.activity.empty ? 'true' : undefined },
+                facts.activity.text,
+              ),
+            ),
+            h(
+              'div',
+              { className: 'wt-drawer-sec' },
+              h('div', { className: 'wt-drawer-key' }, t('drawer.events')),
+              h('div', { className: 'wt-drawer-val', 'data-empty': 'true' }, facts.events.text),
+            ),
+            h(
+              'div',
+              { className: 'wt-drawer-actions' },
+              h(
+                'button',
+                { type: 'button', className: 'wt-btn', onClick: () => onOpenChat(member.id) },
+                t('drawer.openChat'),
+              ),
+            ),
+          ),
+        ],
+        document.body,
+      );
+    }
+
+    /**
+     * One task card. `accepting` comes from the Host's `pendingAcceptance` list:
+     * the work is reported done, it is only waiting for the boss to sign off, so
+     * the flag sits next to the status word rather than in a column of its own.
+     */
+    function TaskCard({ task, t, onOpen, accepting, canAccept, onAccept, canAssign, onAssign }) {
       return h(
         'article',
         { className: 'wt-task' },
@@ -3578,42 +4870,229 @@ window.__ModuleLoader__.load({
           task.status === 'pending'
             ? h('span', null, task.ready ? t('task.ready') : t('task.blocked'))
             : null,
+          accepting === true ? h('span', { className: 'wt-task-accept' }, t('task.awaitingAcceptance')) : null,
           task.blockedBy?.length ? h('span', null, `${t('task.blockedBy')}: ${task.blockedBy.join(', ')}`) : null,
           task.writeScopes?.length ? h('span', null, `${t('task.scopes')}: ${task.writeScopes.join(', ')}`) : null,
           ...(task.writeScopeWarnings ?? []).map((warning) =>
             h('span', { className: 'wt-task-warning', key: warning }, warning),
           ),
+          // Acceptance is a request to the Lead, never a write: the button opens
+          // the evidence dialog, and the dialog queues the sentence.
+          canAssign === true && onAssign !== undefined && task.status !== 'completed'
+            ? h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'wt-btn wt-task-act',
+                  onClick: (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onAssign(task);
+                  },
+                },
+                t('task.assign'),
+              )
+            : null,
+          canAccept === true && onAccept !== undefined && task.status !== 'completed'
+            ? h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'wt-btn wt-task-act',
+                  onClick: (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onAccept(task);
+                  },
+                },
+                t('task.accept'),
+              )
+            : null,
         ),
       );
     }
 
-    function TaskColumn({ title, tasks, t, onOpen }) {
+    function TaskColumn({ title, tasks, t, onOpen, acceptingIds, canAccept, onAccept, canAssign, onAssign }) {
       return h(
         'section',
         { className: 'wt-task-column' },
         h('h3', null, title, h('span', { className: 'wt-task-count' }, String(tasks.length))),
         tasks.length === 0
           ? h('div', { className: 'wt-task-empty' }, t('task.empty'), h('br'), t('task.emptyHint'))
-          : tasks.map((task) => h(TaskCard, { key: task.id, task, t, onOpen })),
+          : tasks.map((task) =>
+              h(TaskCard, {
+                key: task.id,
+                task,
+                t,
+                onOpen,
+                accepting: acceptingIds?.has(task.id) === true,
+                canAccept,
+                onAccept,
+                canAssign,
+                onAssign,
+              }),
+            ),
       );
     }
 
-    function TaskBoard({ tasks, t, onOpen }) {
+    function TaskBoard({
+      tasks,
+      t,
+      onOpen,
+      pendingAcceptance,
+      canAccept,
+      onAccept,
+      canCreate,
+      onCreate,
+      canAssign,
+      onAssign,
+      members,
+    }) {
+      const [acceptTask, setAcceptTask] = useState(null);
+      const [assignTarget, setAssignTarget] = useState(null);
+      const [composing, setComposing] = useState(false);
+      // The list is a flat id set: a card only needs yes/no, and the array
+      // identity changes on every projection tick.
+      const acceptingIds = useMemo(
+        () =>
+          new Set(
+            (Array.isArray(pendingAcceptance) ? pendingAcceptance : [])
+              .map((entry) => entry?.id)
+              .filter((id) => typeof id === 'string'),
+          ),
+        [pendingAcceptance],
+      );
       const pending = tasks.filter((task) => task.status === 'pending');
       const inProgress = tasks.filter((task) => task.status === 'in_progress');
       const completed = tasks.filter((task) => task.status === 'completed');
       return h(
-        'div',
-        { className: 'wt-task-columns' },
-        h(TaskColumn, { title: t('task.pending'), tasks: pending, t, onOpen }),
-        h(TaskColumn, { title: t('task.inProgress'), tasks: inProgress, t, onOpen }),
-        h(TaskColumn, { title: t('task.completed'), tasks: completed, t, onOpen }),
+        React.Fragment,
+        null,
+        // Lead-only, and always on for a Lead: creation is a queued request, so
+        // there is no bridge capability to wait for.
+        canCreate === true
+          ? h(
+              'div',
+              { className: 'wt-board-write' },
+              h(
+                'button',
+                { type: 'button', className: 'wt-btn', onClick: () => setComposing(true) },
+                t('task.create'),
+              ),
+            )
+          : null,
+        h(
+          'div',
+          { className: 'wt-task-columns' },
+          h(TaskColumn, {
+            title: t('task.pending'),
+            tasks: pending,
+            t,
+            onOpen,
+            acceptingIds,
+            canAccept,
+            onAccept: (task) => setAcceptTask(task),
+            canAssign,
+            onAssign: (task) => setAssignTarget(task),
+          }),
+          h(TaskColumn, {
+            title: t('task.inProgress'),
+            tasks: inProgress,
+            t,
+            onOpen,
+            acceptingIds,
+            canAccept,
+            onAccept: (task) => setAcceptTask(task),
+            canAssign,
+            onAssign: (task) => setAssignTarget(task),
+          }),
+          h(TaskColumn, {
+            title: t('task.completed'),
+            tasks: completed,
+            t,
+            onOpen,
+            acceptingIds,
+            canAccept,
+            onAccept: (task) => setAcceptTask(task),
+            canAssign,
+            onAssign: (task) => setAssignTarget(task),
+          }),
+        ),
+        acceptTask === null
+          ? null
+          : h(AcceptDialog, {
+              task: acceptTask,
+              t,
+              onClose: () => setAcceptTask(null),
+              onSubmit: onAccept,
+            }),
+        assignTarget === null
+          ? null
+          : h(AssignDialog, {
+              task: assignTarget,
+              members: Array.isArray(members) ? members : [],
+              t,
+              onClose: () => setAssignTarget(null),
+              onAssign,
+            }),
+        composing === false
+          ? null
+          : h(TaskComposer, {
+              t,
+              onClose: () => setComposing(false),
+              onCreate,
+            }),
       );
     }
 
     // ---------------------------------------------------------------------
     // Settings
     // ---------------------------------------------------------------------
+
+    /** Roles that may take a permission preset, in settings order. */
+    const PRESET_ROLES = [
+      { roleId: 'reviewer', label: 'settings.presetReviewer' },
+      { roleId: 'researcher', label: 'settings.presetResearcher' },
+      { roleId: 'ops', label: 'settings.presetOps' },
+    ];
+
+    /**
+     * One free-text field in the team settings form.
+     *
+     * Saves on blur or Enter, not on every keystroke: the panel disables a field
+     * while its own save is in flight (`saving` guards it), which would eat the
+     * next character mid-word. The draft is local until it differs from the
+     * saved value, and a blank save is a real value — empty clears the field.
+     */
+    function TextSetting({ id, label, hint, value, placeholder, disabled, saving, onSave }) {
+      const [draft, setDraft] = useState(null);
+      const saved = String(value ?? '');
+      const commit = () => {
+        const raw = draft;
+        setDraft(null);
+        if (raw === null || raw === saved) return;
+        onSave(raw);
+      };
+      return h(
+        'div',
+        { className: 'wt-field' },
+        h('label', { htmlFor: id }, label),
+        h('input', {
+          id,
+          type: 'text',
+          value: draft === null ? saved : draft,
+          placeholder,
+          disabled: disabled === true,
+          onChange: (event) => setDraft(event.target.value),
+          onBlur: commit,
+          onKeyDown: (event) => {
+            if (event.key === 'Enter') event.currentTarget.blur();
+          },
+        }),
+        hint ? h('small', null, hint) : null,
+        saving ? h('small', { className: 'wt-saving' }, '…') : null,
+      );
+    }
 
     /**
      * The team's page inside the DSH settings dialog. The shell owns the frame,
@@ -3629,6 +5108,10 @@ window.__ModuleLoader__.load({
       const [saving, setSaving] = useState('');
       const [error, setError] = useState('');
       const [refreshKey, setRefreshKey] = useState(0);
+      // The token budget is typed, not picked: a draft keeps a half-typed
+      // number out of the Host until blur, and keeps the field editable while a
+      // previous save is still in flight.
+      const [budgetDraft, setBudgetDraft] = useState(null);
       const value = snapshot.value ?? {};
       const writable = snapshot.writable === true && snapshot.status === 'ready';
 
@@ -3711,6 +5194,22 @@ window.__ModuleLoader__.load({
         Number.isFinite(parsedMaxWorkers) && parsedMaxWorkers >= 0
           ? Math.min(Math.floor(parsedMaxWorkers), MAX_TEMPORARY_WORKERS)
           : 2;
+      // Tokens, not currency: 0 is a real value ("no cap"), so the parse must not
+      // fall back on falsiness.
+      const parsedBudget = Number(value.teamTokenBudget ?? 0);
+      const tokenBudget = Number.isFinite(parsedBudget) && parsedBudget > 0 ? Math.floor(parsedBudget) : 0;
+      const budgetMode = String(value.tokenBudgetOnExceed ?? 'warn') === 'block' ? 'block' : 'warn';
+      const budgetFieldValue = budgetDraft === null ? String(tokenBudget) : budgetDraft;
+      const commitBudget = () => {
+        const raw = budgetDraft;
+        setBudgetDraft(null);
+        if (raw === null) return;
+        const next = Number(raw);
+        if (!Number.isFinite(next) || next < 0) return;
+        const rounded = Math.floor(next);
+        if (rounded === tokenBudget) return;
+        void save('teamTokenBudget', rounded);
+      };
 
       return h(
         'div',
@@ -3774,6 +5273,18 @@ window.__ModuleLoader__.load({
               h('option', { value: 'every-step' }, t('settings.reporting.every-step')),
             ),
           ),
+          // The bench is a roster decision, so it sits with the size and cadence
+          // rather than with models: it says who takes work, not how they think.
+          h(TextSetting, {
+            id: 'wt-bench-roles',
+            label: t('settings.benchRoles'),
+            hint: t('settings.benchRolesHint'),
+            value: value.benchRoles ?? '',
+            placeholder: 'reviewer, designer',
+            disabled: !writable,
+            saving: saving === 'benchRoles',
+            onSave: (next) => void save('benchRoles', next),
+          }),
         ),
         h(
           'div',
@@ -3956,6 +5467,71 @@ window.__ModuleLoader__.load({
               )
             : null,
         ),
+        // Sits with the cost note above it, because the two answer the same
+        // question: what this team will spend. The hint spells out tokens so a
+        // number here is never read as money.
+        h(
+          'div',
+          { className: 'wt-settings-group' },
+          h('div', { className: 'wt-section-title' }, t('settings.budget')),
+          h(
+            'div',
+            { className: 'wt-field' },
+            h('label', { htmlFor: 'wt-token-budget' }, t('settings.tokenBudget')),
+            h('input', {
+              id: 'wt-token-budget',
+              // Text, not number: the panel's field styling covers text inputs
+              // and a spinner would invite arrow-key edits of a 6-digit cap.
+              type: 'text',
+              inputMode: 'numeric',
+              placeholder: '0',
+              value: budgetFieldValue,
+              disabled: !writable,
+              onChange: (event) => setBudgetDraft(event.target.value),
+              onBlur: commitBudget,
+              onKeyDown: (event) => {
+                if (event.key === 'Enter') event.currentTarget.blur();
+              },
+            }),
+            h('small', null, t('settings.tokenBudgetHint')),
+          ),
+          h(
+            'div',
+            { className: 'wt-field' },
+            h('label', { htmlFor: 'wt-token-budget-exceed' }, t('settings.tokenBudgetOnExceed')),
+            h(
+              'select',
+              {
+                id: 'wt-token-budget-exceed',
+                value: budgetMode,
+                disabled: !writable || saving === 'tokenBudgetOnExceed',
+                onChange: (event) => void save('tokenBudgetOnExceed', event.target.value),
+              },
+              h('option', { value: 'warn' }, t('settings.tokenBudgetOnExceed.warn')),
+              h('option', { value: 'block' }, t('settings.tokenBudgetOnExceed.block')),
+            ),
+            h('small', null, t('settings.tokenBudgetOnExceedHint')),
+          ),
+          saving === 'teamTokenBudget' ? h('small', { className: 'wt-saving' }, '…') : null,
+        ),
+        h(
+          'div',
+          { className: 'wt-settings-group' },
+          h('div', { className: 'wt-section-title' }, t('settings.presets')),
+          ...PRESET_ROLES.map((entry) =>
+            h(TextSetting, {
+              key: entry.roleId,
+              id: `wt-preset-${entry.roleId}`,
+              label: t(entry.label),
+              value: value[presetFieldOf(entry.roleId)] ?? '',
+              placeholder: presetDisplay('', t),
+              disabled: !writable,
+              saving: saving === presetFieldOf(entry.roleId),
+              onSave: (next) => void save(presetFieldOf(entry.roleId), next),
+            }),
+          ),
+          h('div', { className: 'wt-note' }, t('settings.presetsHint')),
+        ),
         error ? h('div', { className: 'wt-error', role: 'alert' }, error) : null,
       );
     }
@@ -3975,6 +5551,11 @@ window.__ModuleLoader__.load({
       t,
       openMember,
       stopMember,
+      enableBoard,
+      handover,
+      acceptTask,
+      createTask,
+      assignTask,
       form,
       useSessions,
       useSessionStatus,
@@ -3983,11 +5564,9 @@ window.__ModuleLoader__.load({
       const team = useProjection('agentTeam');
       const [tab, setTab] = useState('office');
       const [error, setError] = useState('');
+      const [enabling, setEnabling] = useState(false);
       const previousTasks = useRef(new Map());
-      const members = useMemo(
-        () => (team?.members ?? []).filter((member) => member.role !== 'lead'),
-        [team],
-      );
+      const members = useRoster(useProjection);
       const tasks = team?.tasks ?? [];
       const memberByName = useMemo(() => new Map(members.map((member) => [member.name, member])), [members]);
       // The tab shares the dock's poller; the rows below only read the store.
@@ -3998,15 +5577,69 @@ window.__ModuleLoader__.load({
         return member === undefined ? name : roleOrFallback(member).zh.name;
       };
       const formSnapshot = useFormSnapshot(form);
+      const bench = useMemo(
+        () => new Set(parseBenchRoles(formSnapshot.value?.benchRoles).roles),
+        [formSnapshot.value?.benchRoles],
+      );
+      const benchCount = members.filter((member) => isBenched(member, bench)).length;
+      const [handoverStage, setHandoverStage] = useState('idle');
+      // Writes are a Lead surface: a teammate Session must never see 建任务/验收/指派.
+      const isLead = useSessions((state) => state.byId[sessionId]?.origin !== 'subagent');
+      const [details, setDetails] = useState(null);
+      const detailsTrigger = useRef(null);
+      const openDetails = (member) => {
+        detailsTrigger.current = typeof document === 'undefined' ? null : document.activeElement;
+        setDetails(member);
+      };
+      const closeDetails = () => {
+        setDetails(null);
+        // Focus goes back where it came from; a detached trigger is ignored.
+        const node = detailsTrigger.current;
+        detailsTrigger.current = null;
+        if (node !== null && node !== undefined && typeof node.focus === 'function' && node.isConnected !== false) {
+          node.focus();
+        }
+      };
+      // The sentence carries the name a human reads; the Lead resolves the
+      // backend's owner form itself.
+      const assignTaskTo = (taskId, ownerId) => {
+        const member = members.find((row) => row.id === ownerId) ?? null;
+        if (member === null) return Promise.reject(new Error('owner'));
+        return assignTask(taskId, { name: member.name, label: roleOrFallback(member).zh.name });
+      };
       const parsedCapacity = Number(formSnapshot.value?.teamSize ?? MAX_TEAM_SIZE);
       const capacity =
         Number.isFinite(parsedCapacity) && parsedCapacity >= 1 ? parsedCapacity : MAX_TEAM_SIZE;
-      const totalTokens = useSessions((state) =>
+      // The roster hook drops the Lead, so the team's spend is this Session's own
+      // `tokenUsage` plus the members'. `useProjection` is bound to the pane's
+      // Session — the same binding `agentTeam` above uses — and is the hook the
+      // shipped composer usage pill reads for this Session.
+      const leadUsage = useProjection('tokenUsage');
+      const memberTokens = useSessions((state) =>
         members.reduce(
           (sum, member) => sum + sumTokens(projectionOf(state, member.id, 'tokenUsage')),
           0,
         ),
       );
+      const totalTokens = teamTokenTotal(leadUsage, memberTokens);
+      // The Host's budget block is optional: without it the same ceiling and the
+      // same member sum are read back from the settings form and the token
+      // projection, so an older projection still shows a number.
+      const budget = readBudget(team?.budget, {
+        used: totalTokens,
+        limit: formSnapshot.value?.teamTokenBudget,
+        mode: formSnapshot.value?.tokenBudgetOnExceed,
+      });
+      const shownUsed = budget.used;
+      const shownLimit = budget.limit;
+      // The Host publishes the acceptance queue, but the kernel projection it
+      // rides on has no such field, so the derivation below is the live path;
+      // the published array is a forward-compatible shortcut, not the source.
+      const pendingAcceptance = useMemo(() => {
+        const published = Array.isArray(team?.pendingAcceptance) ? team.pendingAcceptance : null;
+        if (published !== null) return published;
+        return acceptanceQueue(tasks, new Set(members.map((member) => member.name)));
+      }, [team?.pendingAcceptance, tasks, members]);
       const workingCount = useSessionStatus((state) =>
         members.reduce((count, member) => {
           const status = state.get(member.id);
@@ -4079,6 +5712,38 @@ window.__ModuleLoader__.load({
         });
       };
 
+      // Handover is a request, not a feature: the Host owns `team_handover` and
+      // the brief it writes, so the panel only queues one sentence through the
+      // same prompt/queue channel a dispatch uses. Nothing is composed here.
+      const runHandover = () => {
+        if (handoverStage === 'sending') return;
+        setHandoverStage('sending');
+        setError('');
+        Promise.resolve()
+          .then(() => handover(t('office.handoverRequest')))
+          .then(() => {
+            setHandoverStage('sent');
+            setTimeout(() => setHandoverStage((current) => (current === 'sent' ? 'idle' : current)), 1800);
+          })
+          .catch((reason) => {
+            setHandoverStage('idle');
+            setError(`${t('office.handoverFailed')}: ${errorText(reason)}`);
+          });
+      };
+
+      // 0.2.2's board sits behind a host-owned flag, so an off board is a real
+      // state to explain rather than an empty list to render.
+      const boardOff = team?.enabled === false;
+      const enable = () => {
+        if (enabling) return;
+        setEnabling(true);
+        Promise.resolve()
+          .then(() => enableBoard())
+          .then((reason) => setError(reason === '' ? '' : `${t('office.boardEnableFailed')}: ${reason}`))
+          .catch((reason) => setError(`${t('office.boardEnableFailed')}: ${errorText(reason)}`))
+          .finally(() => setEnabling(false));
+      };
+
       return h(
         'div',
         { className: 'wt-panel' },
@@ -4105,9 +5770,40 @@ window.__ModuleLoader__.load({
             ),
             h(
               'span',
-              { className: 'wt-head-stat wt-head-tokens', title: t('office.totalTokens') },
-              `${t('office.totalTokens')} ${formatTokens(totalTokens)}`,
+              { className: 'wt-head-stat wt-head-tokens', title: t('office.budgetTitle') },
+              shownLimit > 0
+                ? `${t('office.totalTokens')} ${formatTokens(shownUsed)} / ${formatTokens(shownLimit)}`
+                : `${t('office.totalTokens')} ${t('office.budgetUnlimited', {
+                    amount: formatTokens(shownUsed),
+                  })}`,
             ),
+            budget.exceeded === true
+              ? h(
+                  'span',
+                  { className: 'wt-head-stat wt-head-budget', role: 'status', title: t('office.budgetExceededTitle') },
+                  t('office.budgetExceeded'),
+                )
+              : null,
+            // Last on purpose: the row shrinks from the right, so the bench count
+            // is the first thing to ellipsize while 干活中 survives.
+            benchCount > 0
+              ? h(
+                  'span',
+                  { className: 'wt-head-stat wt-head-bench', title: t('office.benchTitle') },
+                  `${benchCount} ${t('office.benchCount')}`,
+                )
+              : null,
+          ),
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'wt-head-btn',
+              title: t('office.handoverTitle'),
+              disabled: handoverStage === 'sending',
+              onClick: runHandover,
+            },
+            handoverStage === 'sent' ? t('office.handoverSent') : t('office.handover'),
           ),
         ),
         h(
@@ -4148,6 +5844,7 @@ window.__ModuleLoader__.load({
                     role,
                     member: memberByName.get(role.id) ?? null,
                     task: taskFor(role.id),
+                    benched: bench.has(role.id),
                     canHire: members.length < capacity,
                   })),
                   ...extra.map((member) => ({
@@ -4155,6 +5852,7 @@ window.__ModuleLoader__.load({
                     role: roleOrFallback(member),
                     member,
                     task: taskFor(member.name),
+                    benched: isBenched(member, bench),
                     canHire: false,
                   })),
                 ],
@@ -4164,18 +5862,81 @@ window.__ModuleLoader__.load({
                 sparkles,
                 onOpen: open,
                 onStop: stop,
+                onDetails: openDetails,
                 useSessions,
                 useSessionStatus,
               })
-            : h(TaskBoard, {
-                tasks,
-                t,
-                onOpen: (memberName) => {
-                  const member = memberByName.get(memberName);
-                  if (member !== undefined) open(member.id);
-                },
-              }),
+            : boardOff
+              ? h(
+                  React.Fragment,
+                  null,
+                  h(
+                    'div',
+                    { className: 'wt-board-off' },
+                    h('div', { className: 'wt-board-off-hint' }, t('office.boardOffHint')),
+                    h(
+                      'button',
+                      {
+                        type: 'button',
+                        className: 'wt-btn wt-board-off-enable',
+                        disabled: enabling,
+                        onClick: enable,
+                      },
+                      t('office.boardEnable'),
+                    ),
+                  ),
+                  // The host still publishes the saved tasks while the flag is
+                  // off, so a frozen board keeps showing them instead of hiding
+                  // the work the team already did.
+                  tasks.length === 0
+                    ? null
+                    : h('div', { className: 'wt-board-off-frozen' }, h(TaskBoard, {
+                        tasks,
+                        t,
+                        pendingAcceptance,
+                        canAccept: isLead && typeof acceptTask === 'function',
+                        onAccept: acceptTask,
+                        canCreate: isLead && typeof createTask === 'function',
+                        onCreate: createTask,
+                        canAssign: isLead && typeof assignTask === 'function',
+                        onAssign: assignTaskTo,
+                        members,
+                        onOpen: (memberName) => {
+                          const member = memberByName.get(memberName);
+                          if (member !== undefined) open(member.id);
+                        },
+                      })),
+                )
+              : h(TaskBoard, {
+                  tasks,
+                  t,
+                  pendingAcceptance,
+                  canAccept: isLead && typeof acceptTask === 'function',
+                  onAccept: acceptTask,
+                  canCreate: isLead && typeof createTask === 'function',
+                  onCreate: createTask,
+                  canAssign: isLead && typeof assignTask === 'function',
+                  onAssign: assignTaskTo,
+                  members,
+                  onOpen: (memberName) => {
+                    const member = memberByName.get(memberName);
+                    if (member !== undefined) open(member.id);
+                  },
+                }),
         ),
+        details === null
+          ? null
+          : h(MemberDrawer, {
+              member: details,
+              task: taskFor(details.name),
+              t,
+              onClose: closeDetails,
+              onOpenChat: (id) => {
+                closeDetails();
+                open(id);
+              },
+              useSessions,
+            }),
       );
     }
 
@@ -4184,7 +5945,7 @@ window.__ModuleLoader__.load({
     // ---------------------------------------------------------------------
 
     /** Urgency order: what can be unblocked right now outranks what is merely busy. */
-    const STATUS_RANK = { waiting: 0, error: 1, failed: 2, done: 3, working: 4, provisioning: 5, ready: 6, idle: 7 };
+    const STATUS_RANK = { waiting: 0, error: 1, failed: 2, done: 3, working: 4, provisioning: 5, ready: 6, idle: 7, benched: 8 };
     const FACE_MAX = 5;
     const CHIP_MAX = 2;
     /** Summary order, same reasoning as STATUS_RANK; CSS only hides the tail. */
@@ -4520,13 +6281,12 @@ window.__ModuleLoader__.load({
     }
 
     function Dock(props) {
-      const { sessionId, useSessions, useSessionStatus, useProjection, t, openOffice } = props;
+      const { sessionId, form, useSessions, useSessionStatus, useProjection, t, openOffice } = props;
       const team = useProjection('agentTeam');
+      const bench = useBenchRoles(form);
       const isChild = useSessions((state) => state.byId[sessionId]?.origin === 'subagent');
-      const members = useMemo(
-        () => (team?.members ?? []).filter((member) => member.role !== 'lead'),
-        [team],
-      );
+      // `useRoster` already drops the Lead: the dock seats teammates only.
+      const members = useRoster(useProjection);
       const tasks = team?.tasks ?? [];
       const sparkles = useSparkles();
       const [officeError, setOfficeError] = useState('');
@@ -4583,18 +6343,24 @@ window.__ModuleLoader__.load({
                 running: sig[index * 3] === '1',
                 pending: sig[index * 3 + 1] === '1',
                 unread: sig[index * 3 + 2] === '1',
+                benched: isBenched(member, bench),
                 timing: memberRuntime.runtimeOf(member.id),
                 ack: memberRuntime.ackOf(member.id),
               }),
+              benched: isBenched(member, bench),
               index,
             }))
             .sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status] || a.index - b.index),
-        [members, sig, runtimeVersion],
+        [members, sig, bench, runtimeVersion],
       );
 
       // A just-onboarded member is not news: ready and idle both stay out of the
       // chips and out of the summary, so a fresh team leaves the dock at rest.
-      const active = ranked.filter((entry) => entry.status !== 'idle' && entry.status !== 'ready');
+      // A benched seat is not activity either — the office header is where that
+      // count belongs, and a chip would read like a task in flight.
+      const active = ranked.filter(
+        (entry) => entry.status !== 'idle' && entry.status !== 'ready' && entry.status !== 'benched',
+      );
       const chips = active.slice(0, CHIP_MAX);
       const faces = ranked.slice(0, FACE_MAX);
       const more = Math.max(0, members.length - FACE_MAX);
@@ -5083,9 +6849,9 @@ window.__ModuleLoader__.load({
 
     function OfficeAction(props) {
       const { sessionId, useSessions, useProjection, t } = props;
-      const team = useProjection('agentTeam');
       const isChild = useSessions((state) => state.byId[sessionId]?.origin === 'subagent');
-      const members = (team?.members ?? []).filter((member) => member.role !== 'lead');
+      // `useRoster` already drops the Lead, so a hired team still shows a header.
+      const members = useRoster(useProjection);
       const [officeError, setOfficeError] = useState('');
       if (isChild || members.length === 0) return null;
       const openPanel = () => setOfficeError(props.openOffice());
@@ -5217,13 +6983,75 @@ window.__ModuleLoader__.load({
         }
       };
 
+      /**
+       * Turn the task board on for this Lead. `agentTeam` is host-owned state, so
+       * the panel can only ask: `setEnabled` reports a refusal as a value, and
+       * the caller renders it in the panel's own error line.
+       *
+       * The remote namespace is resolved lazily rather than injected: typert's
+       * `remote.<service>` exists only where the host declares a `@Remote` face,
+       * which 0.2.1's plain TeamService does not. A required inject on such a
+       * host would leave this whole fiber pending — dock, office, `@` overlay and
+       * header button would all vanish — so a missing switch is a sentence, not a
+       * load failure.
+        *
+        * Two resolutions, both attempted: a dotted key is not a guaranteed
+        * name-addressed lookup in every cordis build, while the official client
+        * reaches the same face as the `agentTeams` property of the `remote`
+        * namespace. Whichever answers first wins; the accessor can throw, so each
+        * probe is guarded on its own.
+       */
+      const enableTeamBoard = async (sessionId) => {
+        try {
+          let remote;
+          try {
+            remote = ctx.get?.('remote.agentTeams');
+          } catch {
+            remote = undefined;
+          }
+          if (remote === undefined) {
+            try {
+              remote = ctx.remote?.agentTeams;
+            } catch {
+              remote = undefined;
+            }
+          }
+          if (typeof remote?.setEnabled !== 'function') return t('office.boardEnableUnavailable');
+          const result = await remote.setEnabled(sessionId, true);
+          if (result?.ok === false) return String(result.error?.message ?? 'enable was refused');
+          return '';
+        } catch (reason) {
+          return String(reason?.message ?? reason);
+        }
+      };
+
       const injected = (sessionId) => ({
         t,
         openOffice: () => openOffice(sessionId),
         form,
         openMember,
         stopMember: (childId) => stopMember(sessionId, childId),
+        enableBoard: () => enableTeamBoard(sessionId),
         dispatch: (childId, text) => dispatchTask(ctx, sessionId, childId, text),
+        handover: (text) => queueLeadPrompt(ctx, sessionId, text),
+        // One pipe for every write: the panel queues a sentence and the Lead runs
+        // the tool. Nothing here touches the board directly, so there is exactly
+        // one writer and exactly one acceptance gate.
+        acceptTask: (taskId, evidence) => {
+          const request = acceptanceRequest(taskId, evidence);
+          if (request.ok !== true) return Promise.reject(new Error(request.reason));
+          return queueLeadPrompt(ctx, sessionId, request.text);
+        },
+        createTask: (draft) => {
+          const request = createTaskRequest(draft);
+          if (request.ok !== true) return Promise.reject(new Error(request.reason));
+          return queueLeadPrompt(ctx, sessionId, request.text);
+        },
+        assignTask: (taskId, member) => {
+          const request = assignTaskRequest(taskId, member);
+          if (request.ok !== true) return Promise.reject(new Error(request.reason));
+          return queueLeadPrompt(ctx, sessionId, request.text);
+        },
       });
 
       // The registry holds registrations on ITS OWN context, which outlives this

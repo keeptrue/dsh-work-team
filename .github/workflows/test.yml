@@ -1,0 +1,62 @@
+name: test
+
+# The unit suite (npm test) on the two supported Node lines, plus the context size
+# guard. No network is needed once the host packages are installed, and the test
+# count is deliberately not stated here so this comment cannot go stale.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+
+      # Deliberately no `cache: npm`: this repo has no lockfile, so setup-node has
+      # nothing to key a cache on and `npm ci` is not available at all.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      # `index.js` imports @deepseek-ai/schemastery and @deepseek-ai/dsh-tools; the
+      # tests import dsh-tools directly. Both ship with a DSH installation, not with
+      # this repository, so a fresh checkout has no node_modules. Locally that is
+      # what `node scripts/link-host-deps.mjs` is for (it follows the machine's own
+      # `dsh` binary, so it would need a DSH install in the runner); CI installs the
+      # same versions from the registry instead — pinned to what this repo is
+      # developed against, because version drift here is a real failure mode.
+      - name: Install host packages
+        run: >-
+          npm install
+          --no-save --no-package-lock --no-audit --no-fund
+          @deepseek-ai/dsh-tools@0.2.2-rc.2
+          @deepseek-ai/schemastery@3.19.0
+
+      # `npm test` => scripts/run-tests.mjs: it enumerates test/**/*.test.js and
+      # drives `node --test` itself, so CI and a local run use one entry point and
+      # one file set (`node --test test/` dies on Node 22, see the runner's comment).
+      - name: Unit tests
+        run: npm test
+
+      # Budget: system 47,221 chars / tools 87,084 bytes measured on 2026-11-13
+      # (session b1fe1e2c, 110 tools) -> 60,000 / 100,000. A CI checkout has no
+      # session logs, so this step prints SKIP and exits 0; it measures for real
+      # wherever a session log exists.
+      - name: Context size guard
+        run: node scripts/measure-context.mjs --check 60000 100000

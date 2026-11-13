@@ -11,6 +11,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { apply } from '../index.js';
+import { registerChecked } from './support/tool-output-check.js';
+import { until } from './support/until.js';
 
 /** @param {number} ms - wait. @returns {Promise<void>} settled after the delay. */
 function delay(ms) {
@@ -161,6 +163,12 @@ const TEAM_TOOL_NAMES = [
  *   workers?: number,
  *   forkCopies?: number,
  *   absentTools?: string[],
+ *   boardEnabled?: boolean,
+ *   boardError?: Error,
+ *   teamState?: object,
+ *   boardSwitch?: boolean,
+ *   treeTopology?: boolean,
+ *   listTasksError?: Error,
  * }} options - fixture knobs. `listAtLoad` mimics a plugin reload over a live
  *   session. `employee` adds one live employee Agent (also on the roster),
  *   `workers` gives it that many live temporary-worker children, and
@@ -168,6 +176,17 @@ const TEAM_TOOL_NAMES = [
  *   `parentSession`, no `origin: 'subagent'`). `absentTools` are declared names
  *   no installed plugin provides: `restrict()` rejects them, which is the
  *   degraded path the whitelist has to survive.
+ *   `boardEnabled` starts the Session's Team switch on (the 0.2.2 kernel starts
+ *   it off), `boardError` makes opening it fail, and `teamState` is the saved
+ *   `agentTeam` projection — pass `{ enabled: false }` for a Session the user
+ *   switched off by hand.
+ *   `boardSwitch: false` removes `isEnabled`/`setEnabled` and the gate, which is
+ *   the 0.2.1 shape; `treeTopology` mounts the 0.2.2 `subagents` tree so the
+ *   host half can be exercised on the topology it actually ships to.
+ *   `seedTasks` starts the board with real rows (`id`, `subject`, `status`,
+ *   `ownerName`, `blockedBy`, `createdAt`), so the acceptance gate and the
+ *   per-employee token sums can be exercised against a board that is already
+ *   carrying work.
  */
 function makeHost({
   config = {},
@@ -181,17 +200,88 @@ function makeHost({
   workers = 0,
   forkCopies = 0,
   absentTools = [],
+  boardEnabled = false,
+  boardError,
+  teamState,
+  boardSwitch = true,
+  treeTopology = false,
+  listTasksError,
+  seedTasks = [],
+  tokens = {},
 } = {}) {
   const listeners = new Map();
   const restrictions = [];
   const sends = [];
+  const treeSends = [];
   const spawns = [];
   const tasks = [];
+  /** Durable task rows, keyed by id: the board this fixture actually serves. */
+  const taskRows = new Map();
+  /** Every `updateTask` call, in order — compare-and-set attempts included. */
+  const taskUpdates = [];
+  const warnings = [];
+  const boardWrites = [];
   const disposers = [];
   const members = roster.map((row) => ({ role: 'teammate', status: 'inactive', ...row }));
   const settingsValue = { ...config };
   let nextCalls = 0;
   let agentsListError;
+  let nextTaskNumber = 1;
+
+  /**
+   * Seed one durable task row.
+   * @param {object} seed - row fields; `id` and `createdAt` are optional.
+   * @returns {object} the stored row.
+   */
+  const seedTask = (seed) => {
+    const id = seed.id ?? `task-${nextTaskNumber}`;
+    nextTaskNumber += 1;
+    const row = {
+      id,
+      revision: 1,
+      subject: seed.subject ?? id,
+      description: seed.description ?? '',
+      status: seed.status ?? 'pending',
+      blockedBy: [...(seed.blockedBy ?? [])],
+      writeScopes: [...(seed.writeScopes ?? [])],
+      ...(seed.ownerId === undefined ? {} : { ownerId: seed.ownerId }),
+      ...(seed.ownerName === undefined ? {} : { ownerName: seed.ownerName }),
+      ...(seed.createdAt === undefined ? {} : { createdAt: seed.createdAt }),
+    };
+    taskRows.set(id, row);
+    return row;
+  };
+  for (const seed of seedTasks) seedTask(seed);
+
+  /**
+   * Project one stored row the way the Team service does: detached arrays plus
+   * `ready`, which is `pending` and unblocked.
+   * @param {object} row - stored task row.
+   * @returns {object} task view.
+   */
+  const taskView = (row) => ({
+    ...row,
+    blockedBy: [...row.blockedBy],
+    writeScopes: [...row.writeScopes],
+    ready:
+      row.status === 'pending' &&
+      row.blockedBy.every((id) => taskRows.get(id)?.status === 'completed'),
+    writeScopeWarnings: [],
+  });
+
+  /** @param {string} code - Team error code. @param {string} message - human text. */
+  const teamError = (code, message) => Object.assign(new Error(message), { code });
+  /**
+   * The 0.2.2 gate: every board call refuses until the Session's Team mode is on.
+   * @returns {void}
+   * @throws the kernel's exact refusal, code included.
+   */
+  const requireBoard = () => {
+    if (!boardSwitch || boardEnabled) return;
+    throw Object.assign(new Error('enable Agent Teams for this Session before using the task board'), {
+      code: 'TEAM_DISABLED',
+    });
+  };
 
   /**
    * One Agent-scoped registry. Real Agents never share these: the Lead's
@@ -212,8 +302,10 @@ function makeHost({
       sections,
       filters,
       register(definition) {
-        tools.set(definition.name, definition);
-        return () => tools.delete(definition.name);
+        // Same output-schema enforcement the kernel applies (and gate-host uses):
+        // a receipt that drops a required field fails its test here instead of
+        // reaching a live session as a ToolOutputError.
+        return registerChecked(tools, definition);
       },
       restrict(filter) {
         // Mirrors dsh-tools: validate against the inherited set (global + preset,
@@ -314,7 +406,16 @@ function makeHost({
     const scoped = makeScopedTools();
     installTeamTools(scoped);
     employeeScoped = scoped;
-    employeeAgent = { id, session: { id }, status: 'inactive' };
+    // On the tree topology the employee is a durable child of the Lead; the
+    // legacy Team service resolved that from its own journal instead.
+    employeeAgent = {
+      id,
+      session: {
+        id,
+        ...(treeTopology ? { header: { id, parentSession: lead.id, origin: 'subagent' } } : {}),
+      },
+      status: 'inactive',
+    };
     employeeAgent.ctx = contextOf(scoped);
     liveAgents.push(employeeAgent);
     members.push({ id, name, role: 'teammate', status: 'inactive' });
@@ -339,8 +440,65 @@ function makeHost({
 
   const leadRow = { id: 'sess-lead', name: 'lead', role: 'lead', status: 'inactive', diagnostics: [] };
 
+  /** @param {string} id - session id. @returns {string | undefined} roster name. */
+  const rosterNameOf = (id) => members.find((member) => member.id === id)?.name;
+
+  /**
+   * The 0.2.2 subagent tree, mounted only when the fixture asks for it.
+   *
+   * Everything on it is deliberately close to the kernel's own rules, because
+   * the point of the tree mode is to catch exactly those rules: `rootOf` resolves
+   * any member to the Lead, `namesOf` reports `lead` for the root, a target is
+   * addressed by Session id (not by name), and the root itself has no inbox.
+   */
+  const treeService = {
+    rootOf(agent) {
+      if (agent === undefined || agent === null) return undefined;
+      if (agent === lead || agent.id === lead.id) return lead;
+      return agent.session?.header?.parentSession === undefined ? undefined : lead;
+    },
+    namesOf(agent) {
+      if (agent === lead || agent.id === lead.id) return { self: 'lead' };
+      return { self: rosterNameOf(agent.id) ?? agent.id };
+    },
+    async listDescendants(rootId) {
+      if (rootId !== lead.id) return [];
+      return members.map((member) => ({
+        id: member.id,
+        parentId: lead.id,
+        depth: 1,
+        kind: 'session',
+        mode: 'continuable',
+        path: member.name,
+      }));
+    },
+    async startActivation(spec) {
+      spawns.push({
+        caller: spec.parent,
+        name: spec.name,
+        description: spec.label,
+        prompt: spec.prompt,
+        context: 'fresh',
+        provider: spec.provider,
+        signal: spec.signal,
+      });
+      const member = { id: `sess-${spec.name}`, name: spec.name, role: 'teammate', status: 'inactive' };
+      members.push(member);
+      return { childId: member.id, name: spec.name, result: new Promise(() => {}), async dispose() {} };
+    },
+    async sendMessage(sender, targetId, content, options) {
+      treeSends.push({ sender, targetId, content, options });
+      if (sendError !== undefined) throw sendError;
+      return `msg-tree-${treeSends.length}`;
+    },
+  };
+
   const ctx = {
-    logger: { warn() {} },
+    logger: {
+      warn(message) {
+        warnings.push(message);
+      },
+    },
     // The unscoped global view. It deliberately lacks every preset-mounted tool:
     // `read` / `bash` / `grep` are absent here while the agent can still call them.
     tools: {
@@ -356,6 +514,7 @@ function makeHost({
       disposers.push(callback());
     },
     get(name) {
+      if (name === 'subagents') return treeTopology ? treeService : undefined;
       if (name === 'llm') {
         // Mounted, so the model-apply path validates instead of reporting a
         // missing service. This fixture never configures a model.
@@ -371,7 +530,16 @@ function makeHost({
       },
       get: (id) => (id === lead.id ? lead : liveAgents.find((agent) => agent.id === id)),
     },
-    sessionProjections: { stateOf: () => undefined },
+    sessionProjections: {
+      stateOf(session, key) {
+        if (key === 'tokenUsage') {
+          // Seeded usage, so the budget gate can be exercised here too.
+          const totals = tokens[session?.id];
+          return totals === undefined ? undefined : { totals };
+        }
+        return key === 'agentTeam' ? teamState : undefined;
+      },
+    },
     sessionController: {
       // Kept as a recorder: the plugin must never route an employee selection
       // through this ownership-gated API.
@@ -384,6 +552,21 @@ function makeHost({
       },
     },
     agentTeams: {
+      // The per-Session switch 0.2.2 added: absent on 0.2.1, which is exactly the
+      // topology difference `boardSupported()` has to recognise.
+      isEnabled() {
+        return boardEnabled;
+      },
+      async setEnabled(caller, enabled) {
+        boardWrites.push({ caller, enabled });
+        if (boardError !== undefined) throw boardError;
+        // The kernel appends the event, then awaits the flush, and the remote
+        // path is an RPC back to the host: the switch is not readable on the same
+        // tick it was asked for. A macrotask yield models that durable flush, and
+        // it is the window single-flight coalescing has to cover.
+        await new Promise((resolve) => setImmediate(resolve));
+        boardEnabled = enabled === true;
+      },
       tryMembership(agent) {
         if (agent === lead) return { root: lead, id: 'team', role: 'lead', name: 'lead' };
         if (agent !== undefined && agent === employeeAgent) return employeeMembership;
@@ -398,16 +581,122 @@ function makeHost({
         if (sendError !== undefined) throw sendError;
         return { messageId: `msg-${sends.length}` };
       },
-      listTasks() {
-        return [];
+      listTasks(caller) {
+        requireBoard(caller);
+        if (listTasksError !== undefined) throw listTasksError;
+        return [...taskRows.values()]
+          .filter((row) => row.status !== 'deleted')
+          .map(taskView);
+      },
+      getTask(caller, id) {
+        requireBoard(caller);
+        const row = taskRows.get(id);
+        if (row === undefined) throw teamError('TEAM_TASK_NOT_FOUND', `team task "${id}" not found`);
+        return taskView(row);
       },
       async createTask(caller, request) {
-        tasks.push({ caller, request });
-        return {
-          id: `task-${tasks.length}`,
+        requireBoard(caller);
+        // The service creates an UNOWNED, PENDING task with revision 1: there is
+        // no owner field on create, which is why an assigned review task needs a
+        // `reassign` afterwards.
+        const row = seedTask({
           subject: request.subject,
           description: request.description,
+          blockedBy: request.blockedBy ?? [],
+          writeScopes: request.writeScopes ?? [],
+        });
+        tasks.push({ caller, request, id: row.id, revision: row.revision });
+        return taskView(row);
+      },
+      async updateTask(caller, request) {
+        requireBoard(caller);
+        taskUpdates.push({ caller, request });
+        const row = taskRows.get(request.taskId);
+        if (row === undefined) {
+          throw teamError('TEAM_TASK_NOT_FOUND', `team task "${request.taskId}" not found`);
+        }
+        if (row.revision !== request.expectedRevision) {
+          throw teamError(
+            'TEAM_TASK_STALE_REVISION',
+            `stale team task "${row.id}" revision ${request.expectedRevision}; current revision is ${row.revision}`,
+          );
+        }
+        if (row.status === 'deleted') {
+          throw teamError('TEAM_TASK_DELETED', `team task "${row.id}" is deleted`);
+        }
+        /** Mirrors the kernel's authorization: the Lead, or the current owner. */
+        const authorize = () => {
+          if (caller !== lead && row.ownerId !== caller?.id) {
+            throw teamError('TEAM_TASK_UNAUTHORIZED', 'task mutation requires its owner or Team Lead');
+          }
         };
+        switch (request.action) {
+          case 'edit':
+            authorize();
+            if (request.subject !== undefined) row.subject = request.subject;
+            if (request.description !== undefined) row.description = request.description;
+            break;
+          case 'complete':
+            authorize();
+            if (row.status !== 'in_progress') {
+              throw teamError('TEAM_TASK_INVALID_TRANSITION', 'only an in-progress task can complete');
+            }
+            row.status = 'completed';
+            break;
+          case 'reassign': {
+            if (caller !== lead) throw teamError('TEAM_LEAD_REQUIRED', 'only the Team Lead can reassign tasks');
+            if (row.status !== 'pending' && row.status !== 'in_progress') {
+              throw teamError(
+                'TEAM_TASK_INVALID_TRANSITION',
+                'only a pending or in-progress task can be reassigned',
+              );
+            }
+            if (request.owner === undefined) {
+              row.status = 'pending';
+              delete row.ownerId;
+              delete row.ownerName;
+              break;
+            }
+            // A blocked task cannot be handed out: the reviewer would look busy
+            // on work it is not allowed to start.
+            if (row.status === 'pending' && taskView(row).ready !== true) {
+              throw teamError('TEAM_TASK_BLOCKED', `team task "${row.id}" is blocked`);
+            }
+            // 0.2.2 resolves a SessionId, 0.2.1 a member name.
+            const assignee = treeTopology
+              ? members.find((member) => member.id === request.owner)
+              : members.find((member) => member.name === request.owner);
+            if (assignee === undefined) {
+              throw teamError(
+                'TEAM_MEMBER_NOT_FOUND',
+                `agent "${request.owner}" is not a continuable descendant of this task board's root`,
+              );
+            }
+            row.status = 'in_progress';
+            row.ownerId = assignee.id;
+            row.ownerName = assignee.name;
+            break;
+          }
+          case 'set_dependencies':
+            authorize();
+            if (!Array.isArray(request.blockedBy)) {
+              throw teamError('TEAM_INVALID_ARGUMENT', 'set_dependencies requires blocked_by');
+            }
+            for (const id of request.blockedBy) {
+              if (id === row.id) {
+                throw teamError('TEAM_TASK_DEPENDENCY_CYCLE', 'a team task cannot block itself');
+              }
+              if (taskRows.get(id) === undefined) {
+                throw teamError('TEAM_TASK_NOT_FOUND', `blocker task "${id}" not found`);
+              }
+            }
+            row.blockedBy = [...request.blockedBy];
+            break;
+          default:
+            throw teamError('TEAM_INVALID_ARGUMENT', `unsupported task action ${String(request.action)}`);
+        }
+        row.revision += 1;
+        return taskView(row);
       },
       async spawnTeammate(caller, request) {
         // The caller is part of the record: an employee hire must still spawn
@@ -428,6 +717,13 @@ function makeHost({
       },
     },
   };
+
+  // The 0.2.1 shape: no per-Session switch at all, and a board that always
+  // answers. `boardSupported()` has to see both methods gone.
+  if (!boardSwitch) {
+    delete ctx.agentTeams.isEnabled;
+    delete ctx.agentTeams.setEnabled;
+  }
 
   /** @param {string} name - event name. @returns {Function[]} registered listeners. */
   const listenersFor = (name) => listeners.get(name) ?? [];
@@ -506,9 +802,22 @@ function makeHost({
     employeeVisibleTools: () => (employeeScoped === undefined ? undefined : visibleTools(employeeScoped)),
     restrictions,
     sends,
+    treeSends,
     spawns,
     tasks,
+    /** Durable board rows, keyed by id: assert revisions and evidence here. */
+    taskRows,
+    /** Every `updateTask` attempt in order, refusals included. */
+    taskUpdates,
+    /** Add one row to the board after the plugin is applied. */
+    seedTask,
     members,
+    boardWrites,
+    warnings,
+    tree: treeTopology ? treeService : undefined,
+    get boardEnabled() {
+      return boardEnabled;
+    },
     emitCreated,
     emitPreStep,
     emitDocumentUpdated,
@@ -557,7 +866,10 @@ test('immediate autoStart forms the default line-up off the creation path', asyn
     assert.deepEqual(results, [undefined]);
     assert.equal(host.spawns.length, 0);
 
-    await delay(30);
+    // The lanes are started by timers, so wait for the requests themselves.
+    await until(() => host.spawns.length === 3, {
+      describe: () => host.spawns.map((request) => request.name),
+    });
     assert.deepEqual(
       host.spawns.map((request) => request.name),
       ['pm', 'frontend', 'backend'],
@@ -590,14 +902,19 @@ test('agent/created resolves while the first spawn is still open', async () => {
     // The creation path returned before the background loop even asked for seat one.
     assert.equal(host.spawns.length, 0);
 
-    await delay(10);
-    // Formation concurrency keeps both seats in flight; neither has settled.
-    assert.equal(host.spawns.length, 2);
+    // Formation concurrency keeps both seats in flight; neither has settled. Wait
+    // for the second request instead of betting on a 10 ms window: both lanes are
+    // started by timers, and two asynchronous spawns do not always register that
+    // fast on a loaded machine.
+    await until(() => host.spawns.length === 2, {
+      describe: () => ({ spawns: host.spawns.length, members: host.members.length }),
+    });
     assert.equal(host.members.length, 0);
 
     release();
-    await delay(30);
-    assert.equal(host.members.length, 2);
+    await until(() => host.members.length === 2, {
+      describe: () => ({ spawns: host.spawns.length, members: host.members.length }),
+    });
   } finally {
     host.dispose();
   }
@@ -624,11 +941,16 @@ test('a slow formation never delays the first step', async () => {
     ]);
     const elapsed = Date.now() - started;
     assert.deepEqual(decision, { kind: 'enter', messages });
-    assert.ok(elapsed < 30, `pre-step took ${elapsed}ms; it must not wait for the spawns`);
+    // The spawns in this test take 200 ms, so anything well under that proves the
+    // step did not wait for them. The bound is 100 ms rather than 30: a 30 ms
+    // budget is a wall-clock assertion about the runner, and it flakes on a loaded
+    // box while saying nothing extra about the behaviour.
+    assert.ok(elapsed < 100, `pre-step took ${elapsed}ms; it must not wait for the spawns`);
 
-    await delay(30);
+    await until(() => host.spawns.length === 2, {
+      describe: () => ({ spawns: host.spawns.length, members: host.members.length }),
+    });
     // Two spawns are open at once; the roster only fills when they settle.
-    assert.equal(host.spawns.length, 2);
     assert.equal(host.members.length, 0);
   } finally {
     host.dispose();
@@ -646,7 +968,9 @@ test('first-message autoStart waits for the first step and never blocks it', asy
     const messages = [userMessage('m1', '你好')];
     const decision = await host.emitPreStep(messages, keepMessages(messages));
     assert.deepEqual(decision, { kind: 'enter', messages });
-    await delay(20);
+    await until(() => host.spawns.length === 2, {
+      describe: () => host.spawns.map((request) => request.name),
+    });
     assert.deepEqual(
       host.spawns.map((request) => request.name),
       ['pm', 'frontend'],
@@ -666,9 +990,10 @@ test('autoStart ignores clear, compact, and a lead that was already formed', asy
     assert.equal(host.spawns.length, 0);
 
     await host.emitCreated({ agent: host.lead, source: 'resume' });
-    await delay(20);
+    await until(() => host.spawns.length === 2, { describe: () => host.spawns.length });
     assert.equal(host.spawns.length, 2);
 
+    // The second resume must add nothing: this one is a hold, not a wait.
     await host.emitCreated({ agent: host.lead, source: 'resume' });
     await delay(20);
     assert.equal(host.spawns.length, 2);
@@ -681,7 +1006,7 @@ test('a Lead already live when the plugin loads is treated as a resume', async (
   const host = makeHost({ config: { autoStart: 'immediate', teamSize: 2 }, listAtLoad: true });
   try {
     apply(host.ctx, { autoStart: 'immediate', teamSize: 2 });
-    await delay(20);
+    await until(() => host.spawns.length === 2, { describe: () => host.spawns.length });
     assert.equal(host.spawns.length, 2);
   } finally {
     host.dispose();
@@ -744,7 +1069,7 @@ test('team_start hires through the same two-lane pool and reports the settled sh
     apply(host.ctx, {});
     const started = host.teamStart.execute({}, { agent: host.lead });
     // Two seats in flight at once; a serial loop would only ever show one.
-    await delay(10);
+    await until(() => host.spawns.length === 2, { describe: () => host.spawns.length });
     assert.equal(host.spawns.length, 2);
     const result = await started;
     assert.deepEqual(
@@ -775,14 +1100,25 @@ test('team_start reports progress instead of opening a second formation group', 
   try {
     apply(host.ctx, { autoStart: 'immediate', teamSize: 4 });
     await host.emitCreated({ agent: host.lead, source: 'startup' });
-    await delay(5);
+    // Wait until the formation run has actually started a lane, instead of giving
+    // it 5 ms and hoping.
+    await until(() => host.spawns.length > 0, { describe: () => host.spawns.length });
 
     const running = await host.teamStart.execute({}, { agent: host.lead });
     assert.equal(running.hired.length, 0);
     assert.match(running.note, /Automatic team formation is already/);
     assert.equal(running.capacity, 4);
 
-    await delay(120);
+    // The seats being requested is not the same as the run being finished: the
+    // second call only reports capacity once formation has settled, so that is
+    // what to wait for.
+    await until(
+      async () => {
+        const report = await host.tools.get('team_status').execute({}, { agent: host.lead });
+        return report.autoStart === 'done';
+      },
+      { describe: () => 'formation never settled' },
+    );
     assert.equal(host.spawns.length, 4);
     const after = await host.teamStart.execute({}, { agent: host.lead });
     assert.match(after.note, /capacity/);
@@ -999,7 +1335,10 @@ test('leadHandsOff denies write and edit per call, and the panel switch is live'
     // The Config is volatile: a settings save does not remount the scope.
     host.setSettings({ leadHandsOff: true });
     host.emitDocumentUpdated('work-team');
-    await delay(200);
+    // The settings debounce is a timer: wait for the guard to flip, not for 200 ms.
+    await until(() => /hands-off mode/.test(String(host.guardReason('write'))), {
+      describe: () => String(host.guardReason('write')),
+    });
     assert.match(String(host.guardReason('write')), /hands-off mode/);
     assert.match(String(host.guardReason('edit')), /hands-off mode/);
     assert.equal(host.guardReason('read'), undefined);
@@ -1008,20 +1347,25 @@ test('leadHandsOff denies write and edit per call, and the panel switch is live'
 
     host.setSettings({ leadHandsOff: false });
     host.emitDocumentUpdated('work-team');
-    await delay(200);
+    await until(() => host.guardReason('write') === undefined, {
+      describe: () => String(host.guardReason('write')),
+    });
     assert.equal(host.guardReason('write'), undefined);
   } finally {
     host.dispose();
   }
 });
 
-test('the Lead scope installs the guide and the four supervision tools', async () => {
+test('the Lead scope installs the guide and the seven supervision tools', async () => {
   const host = makeHost({ listAtLoad: true });
   try {
     apply(host.ctx, {});
     assert.deepEqual([...host.tools.keys()].sort(), [
+      'accept_task',
       'dispatch_tasks',
       'hire_teammate',
+      'team_handover',
+      'team_recover',
       'team_start',
       'team_status',
     ]);
@@ -1058,8 +1402,7 @@ test('spawn without a task keeps the onboarding first turn', async () => {
   try {
     apply(host.ctx, { autoStart: 'immediate', teamSize: 2 });
     await host.emitCreated({ agent: host.lead, source: 'startup' });
-    await delay(30);
-    assert.equal(host.spawns.length, 2);
+    await until(() => host.spawns.length === 2, { describe: () => host.spawns.length });
     for (const spawn of host.spawns) {
       assert.equal(spawn.prompt.length, 1);
       assert.match(spawn.prompt[0].text, /已就位/);
@@ -1166,10 +1509,11 @@ test('automatic formation keeps two spawns in flight', async () => {
     await host.emitCreated({ agent: host.lead, source: 'startup' });
     // Both workers claim a seat before either spawn resolves, so two requests
     // are open at once; with a serial loop this would always read 1.
-    await delay(10);
-    assert.equal(host.spawns.length, 2);
+    await until(() => host.spawns.length === 2, {
+      describe: () => ({ spawns: host.spawns.length, members: host.members.length }),
+    });
     assert.equal(host.members.length, 0);
-    await delay(120);
+    await until(() => host.spawns.length === 4, { describe: () => host.spawns.length });
     assert.deepEqual(
       host.spawns.map((request) => request.name),
       ['pm', 'frontend', 'backend', 'reviewer'],
@@ -1185,8 +1529,14 @@ test('team_status reports the formation state the Lead needs to supervise', asyn
   try {
     apply(host.ctx, { autoStart: 'immediate', teamSize: 2 });
     await host.emitCreated({ agent: host.lead, source: 'startup' });
-    await delay(30);
-    const status = await host.tools.get('team_status').execute({}, { agent: host.lead });
+    // Formation state, not elapsed time, is the thing being waited for.
+    const status = await until(
+      async () => {
+        const report = await host.tools.get('team_status').execute({}, { agent: host.lead });
+        return report.autoStart === 'done' ? report : undefined;
+      },
+      { describe: () => 'autoStart never reached done' },
+    );
     assert.equal(status.autoStart, 'done');
     assert.equal(status.size, 2);
 
@@ -1236,7 +1586,9 @@ test('the first @message under first-message mode says starting and still kicks 
     assert.equal(host.sends.length, 0);
 
     // Routing ran first, but the kick still happened: formation is under way.
-    await delay(30);
+    await until(() => host.spawns.length === 2, {
+      describe: () => host.spawns.map((request) => request.name),
+    });
     assert.deepEqual(
       host.spawns.map((request) => request.name),
       ['pm', 'frontend'],
@@ -1321,6 +1673,7 @@ test('an employee hire at full capacity files exactly one hiring request', async
     );
     assert.equal(result.created, false);
     assert.equal(result.status, 'requested');
+    assert.equal(result.delivered, 'task', 'the request is a board task, not a private message');
     assert.equal(result.requestId, 'task-1');
     assert.equal(result.name, 'writer');
     assert.equal(host.spawns.length, 0, 'no seat is taken when the team is full');
@@ -1377,6 +1730,7 @@ test('an employee hire with a free seat spawns under the Lead and carries an emp
     assert.equal(result.created, true);
     assert.equal(result.status, 'inactive');
     assert.equal(result.name, 'writer');
+    assert.equal(result.delivered, 'hired', 'a real hire is neither a task nor a message');
     // The output schema requires requestId on every return path, so the success
     // path must spell it out as an empty string rather than omit it.
     assert.equal(result.requestId, '');
@@ -1450,7 +1804,12 @@ test('the employee hire switch and the persona text are live, not install-time',
     // Flip the panel switches: the next evaluation sees the new values without a remount.
     host.setSettings({ allowSelfHire: true, reporting: 'completion', maxWorkersPerEmployee: 3 });
     host.emitDocumentUpdated('work-team');
-    await delay(200);
+    await until(
+      () =>
+        host.employeeGuardReason('hire_teammate') === undefined &&
+        /hire_teammate/.test(persona.text()),
+      { describe: () => persona.text().slice(0, 200) },
+    );
     assert.equal(host.employeeGuardReason('hire_teammate'), undefined);
     assert.match(persona.text(), /hire_teammate/);
     assert.match(persona.text(), /最多同时 3 个/);
@@ -1459,11 +1818,15 @@ test('the employee hire switch and the persona text are live, not install-time',
     // Budget 0 is the documented off switch: the whole section disappears, live.
     host.setSettings({ employeeStepBudget: 0 });
     host.emitDocumentUpdated('work-team');
-    await delay(200);
+    await until(() => !/收敛预算/.test(persona.text()), {
+      describe: () => persona.text().slice(0, 200),
+    });
     assert.doesNotMatch(persona.text(), /收敛预算/);
     host.setSettings({ employeeStepBudget: 40 });
     host.emitDocumentUpdated('work-team');
-    await delay(200);
+    await until(() => /约用 40 次工具调用内交付/.test(persona.text()), {
+      describe: () => persona.text().slice(0, 200),
+    });
     assert.match(persona.text(), /约用 40 次工具调用内交付/);
   } finally {
     host.dispose();
@@ -1599,14 +1962,19 @@ test('the trim switch is live: off restores 101, on trims again, and filters nev
     // Panel off: the allow filter must be disposed, not layered under a new one.
     host.setSettings({ trimEmployeeTools: false });
     host.emitDocumentUpdated('work-team');
-    await delay(200);
+    await until(() => host.employeeAllowFilters().length === 0, {
+      describe: () => host.employeeAllowFilters().length,
+    });
     assert.equal(host.employeeAllowFilters().length, 0, 'the whitelist is lifted, not intersected away');
     assert.equal(host.employeeVisibleTools().size, 101);
 
     // Panel on again: back to exactly the same surface, not a shrinking one.
     host.setSettings({ trimEmployeeTools: true });
     host.emitDocumentUpdated('work-team');
-    await delay(200);
+    await until(
+      () => host.employeeAllowFilters().length === 1 && host.employeeVisibleTools().size === trimmed,
+      { describe: () => host.employeeAllowFilters().length },
+    );
     assert.equal(host.employeeAllowFilters().length, 1);
     assert.equal(host.employeeVisibleTools().size, trimmed);
 
@@ -1634,7 +2002,11 @@ test('ten switch flips register exactly one filter per flip and never stack', as
       const on = flip % 2 === 0; // the first flip turns it off
       host.setSettings({ trimEmployeeTools: !on });
       host.emitDocumentUpdated('work-team');
-      await delay(160);
+      // Each flip lands on its own timer; wait for that flip's answer.
+      await until(
+        () => host.employeeAllowFilters().length === (on ? 0 : 1),
+        { describe: () => host.employeeAllowFilters().length },
+      );
       assert.equal(
         host.employeeAllowFilters().length,
         on ? 0 : 1,
@@ -1716,6 +2088,325 @@ test('a degraded whitelist is not re-registered by an unrelated save', async () 
     assert.equal(host.employeeAllowFilters()[0], settled);
     assert.equal(host.restrictions.length, afterInstall);
     assert.equal(host.employeeVisibleTools().size, 32);
+  } finally {
+    host.dispose();
+  }
+});
+
+/*
+ * The Session-level Team switch (0.2.2).
+ *
+ * A new Session starts with Agent Teams off: `createTask` and `listTasks` throw
+ * TEAM_DISABLED until the root's Session log carries `team/mode`. The plugin has
+ * to open that switch before it touches the board, and it has to leave the switch
+ * alone when the user closed it on purpose.
+ */
+
+test('team_status opens a fresh Session board once and reports it as on', async () => {
+  const host = makeHost({ roster: [{ id: 'sess-pm', name: 'pm' }] });
+  try {
+    apply(host.ctx, {});
+    await host.emitCreated({ agent: host.lead, source: 'created' });
+    assert.equal(host.boardEnabled, false, 'a new Session starts with the board closed');
+
+    const status = await host.tools.get('team_status').execute({}, { agent: host.lead });
+    assert.equal(host.boardWrites.length, 1, 'one switch write, not one per board read');
+    assert.equal(host.boardWrites[0].caller, host.lead);
+    assert.equal(host.boardWrites[0].enabled, true);
+    assert.equal(status.taskBoard, 'on');
+    assert.equal(status.note, '', 'an open board needs no hint');
+    assert.deepEqual(status.tasks, { pending: 0, inProgress: 0, completed: 0 });
+    assert.equal(status.size, 1);
+
+    // Idempotence: once open, later reads neither rewrite the switch nor warn.
+    await host.tools.get('team_status').execute({}, { agent: host.lead });
+    assert.equal(host.boardWrites.length, 1);
+    assert.deepEqual(host.warnings, []);
+  } finally {
+    host.dispose();
+  }
+});
+
+test('a board the user switched off is reported, not overridden', async () => {
+  const host = makeHost({ teamState: { enabled: false } });
+  try {
+    apply(host.ctx, {});
+    await host.emitCreated({ agent: host.lead, source: 'created' });
+    const status = await host.tools.get('team_status').execute({}, { agent: host.lead });
+
+    assert.equal(host.boardWrites.length, 0, 'explicit off is the user\'s answer, never rewritten');
+    assert.equal(status.taskBoard, 'off');
+    assert.match(status.note, /Agent Teams/);
+    assert.equal(status.size, 0, 'the roster half of the report still works');
+    assert.deepEqual(status.tasks, { pending: 0, inProgress: 0, completed: 0 });
+    assert.deepEqual(host.warnings, [], 'a user choice is a state, not a fault');
+  } finally {
+    host.dispose();
+  }
+});
+
+test('a board that will not open still produces a full team_status', async () => {
+  const host = makeHost({
+    roster: [{ id: 'sess-backend', name: 'backend' }],
+    boardError: new Error('session is closing'),
+  });
+  try {
+    apply(host.ctx, {});
+    await host.emitCreated({ agent: host.lead, source: 'created' });
+    const status = await host.tools.get('team_status').execute({}, { agent: host.lead });
+
+    assert.equal(status.taskBoard, 'unavailable');
+    assert.equal(status.size, 1, 'a broken board must not take the roster report down');
+    assert.equal(status.members[0].name, 'backend');
+    assert.match(status.note, /could not be opened/);
+    assert.ok(
+      host.warnings.some((line) => /task board could not be opened/.test(line)),
+      `expected one board warning, got ${JSON.stringify(host.warnings)}`,
+    );
+
+    // One diagnostic per Session, however many tools try to open the board.
+    await host.tools.get('team_status').execute({}, { agent: host.lead });
+    assert.equal(
+      host.warnings.filter((line) => /task board could not be opened/.test(line)).length,
+      1,
+    );
+  } finally {
+    host.dispose();
+  }
+});
+
+test('a hiring request reaches the Lead as a message when the board cannot open', async () => {
+  const host = makeHost({
+    employee: { name: 'frontend' },
+    roster: [{ id: 'sess-backend', name: 'backend' }],
+    boardError: new Error('team mode is locked'),
+  });
+  try {
+    apply(host.ctx, { teamSize: 1 });
+    const result = await host.employeeTools.get('hire_teammate').execute(
+      { role: 'writer' },
+      { agent: host.employee, signal: new AbortController().signal },
+    );
+
+    assert.equal(result.created, false);
+    assert.equal(result.status, 'requested');
+    assert.equal(result.delivered, 'message', 'the request reached the Lead as a message');
+    assert.equal(result.requestId, '', 'no board task exists to point at');
+    assert.equal(host.tasks.length, 0, 'nothing is filed on a closed board');
+    assert.equal(host.sends.length, 1, 'the request still leaves the employee');
+    // The employee is the sender: the root has no inbox of its own, and `lead` is
+    // a target name the bridge resolves to the root.
+    assert.equal(host.sends[0].caller, host.employee);
+    assert.equal(host.sends[0].request.target, 'lead');
+    assert.match(host.sends[0].request.content[0].text, /招聘申请：笔笔（writer）/);
+    assert.match(host.sends[0].request.content[0].text, /申请人：frontend/);
+  } finally {
+    host.dispose();
+  }
+});
+
+/*
+ * 0.2.2 on the Host side: the tree topology, the switch, and a board that stays
+ * closed. The fixture's legacy shape exercises the same code through the Team
+ * service branch, so these are the cases that prove the tree branch is not dead.
+ */
+
+test('on the tree topology team_status opens the board from the root, exactly once', async () => {
+  const host = makeHost({ treeTopology: true, roster: [{ id: 'sess-pm', name: 'pm' }] });
+  try {
+    apply(host.ctx, {});
+    await host.emitCreated({ agent: host.lead, source: 'created' });
+
+    const status = await host.tools.get('team_status').execute({}, { agent: host.lead });
+    assert.equal(host.boardWrites.length, 1, 'one switch write for the first read');
+    assert.equal(host.boardWrites[0].caller, host.lead, 'only the root may move the switch');
+    assert.equal(host.boardWrites[0].enabled, true);
+    assert.equal(status.taskBoard, 'on');
+    assert.deepEqual(
+      status.members.map((member) => member.name),
+      ['pm'],
+      'the roster still comes from the tree catalog',
+    );
+  } finally {
+    host.dispose();
+  }
+});
+
+test('a block-mode hire refusal keeps its full receipt shape on this fixture too', async () => {
+  const host = makeHost({
+    listAtLoad: true,
+    roster: [{ id: 'sess-pm', name: 'pm' }],
+    tokens: { 'sess-lead': { uncachedInputTokens: 500 } },
+  });
+  try {
+    apply(host.ctx, { teamTokenBudget: 100, tokenBudgetOnExceed: 'block' });
+    const receipt = await host.tools.get('hire_teammate').execute(
+      { role: 'backend' },
+      { agent: host.lead, signal: new AbortController().signal },
+    );
+    assert.equal(receipt.accepted, false);
+    assert.equal(receipt.delivered, 'refused');
+    assert.equal(receipt.created, false);
+    assert.equal(host.spawns.length, 0);
+    // The hire refusal is the path that carries `budgetRefusal().budget` straight
+    // through, so every required field has to be here — a 4-field budget used to
+    // reach the model as a ToolOutputError instead of an actionable refusal.
+    assert.deepEqual(receipt.budget, {
+      used: 500,
+      limit: 100,
+      mode: 'block',
+      exceeded: true,
+      unknown: 1,
+      note: '1 个成员的会话没有加载，未计入用量；实际已用可能更高（预算上限按 100 计）。',
+    });
+    assert.equal(receipt.actions.length, 3);
+  } finally {
+    host.dispose();
+  }
+});
+
+test('concurrent board touches in one step share a single switch write', async () => {
+  const host = makeHost({ treeTopology: true, roster: [{ id: 'sess-pm', name: 'pm' }] });
+  try {
+    apply(host.ctx, {});
+    await host.emitCreated({ agent: host.lead, source: 'created' });
+
+    // Read-then-write is not atomic in the kernel: without coalescing both tools
+    // append their own team/mode event and flush twice.
+    const [status, dispatch] = await Promise.all([
+      host.tools.get('team_status').execute({}, { agent: host.lead }),
+      host
+        .tools.get('dispatch_tasks')
+        .execute({ assignments: [] }, { agent: host.lead, signal: new AbortController().signal }),
+    ]);
+
+    assert.equal(host.boardWrites.length, 1, 'one open per Session, however many tools ask');
+    assert.equal(status.taskBoard, 'on');
+    assert.deepEqual(dispatch, {
+      accepted: true,
+      results: [],
+      sent: 0,
+      failed: 0,
+      // `pm` is on the roster but has no live Agent in this fixture, so its usage
+      // cannot be read: the budget says so instead of calling it zero.
+      budget: {
+        used: 0,
+        limit: 0,
+        mode: 'warn',
+        exceeded: false,
+        unknown: 1,
+        note: '1 个成员的会话没有加载，未计入用量；实际已用可能更高（预算上限按 不限 计）。',
+      },
+      actions: [],
+    });
+  } finally {
+    host.dispose();
+  }
+});
+
+test('a board with no Session switch still files hiring requests as tasks', async () => {
+  // The 0.2.1 shape: no isEnabled/setEnabled, and a board that always answers.
+  // Degrading this to a private message would change 0.2.1 behaviour for nothing.
+  const host = makeHost({
+    boardSwitch: false,
+    employee: { name: 'frontend' },
+    roster: [
+      { id: 'sess-pm', name: 'pm' },
+      { id: 'sess-backend', name: 'backend' },
+      { id: 'sess-reviewer', name: 'reviewer' },
+      { id: 'sess-researcher', name: 'researcher' },
+      { id: 'sess-designer', name: 'designer' },
+      { id: 'sess-ops', name: 'ops' },
+    ],
+  });
+  try {
+    apply(host.ctx, {});
+    const result = await host.employeeTools.get('hire_teammate').execute(
+      { role: 'writer' },
+      { agent: host.employee, signal: new AbortController().signal },
+    );
+
+    assert.equal(result.created, false);
+    assert.equal(result.delivered, 'task');
+    assert.equal(result.requestId, 'task-1');
+    assert.equal(host.tasks.length, 1, 'the request lands on the board');
+    assert.equal(host.sends.length, 0, 'and never becomes a private message');
+    assert.equal(host.boardWrites.length, 0, 'there is no switch to write');
+  } finally {
+    host.dispose();
+  }
+});
+
+test('a degraded hire request is addressed from the employee to the root Session', async () => {
+  const host = makeHost({
+    treeTopology: true,
+    employee: { name: 'frontend' },
+    roster: [
+      { id: 'sess-pm', name: 'pm' },
+      { id: 'sess-backend', name: 'backend' },
+      { id: 'sess-reviewer', name: 'reviewer' },
+      { id: 'sess-researcher', name: 'researcher' },
+      { id: 'sess-designer', name: 'designer' },
+      { id: 'sess-ops', name: 'ops' },
+    ],
+    boardError: new Error('team mode is locked'),
+  });
+  try {
+    apply(host.ctx, {});
+    await host.emitCreated({ agent: host.lead, source: 'created' });
+    const result = await host.employeeTools.get('hire_teammate').execute(
+      { role: 'writer' },
+      { agent: host.employee, signal: new AbortController().signal },
+    );
+
+    assert.equal(result.delivered, 'message');
+    assert.equal(host.treeSends.length, 1, 'the tree service delivers, not the legacy one');
+    assert.equal(host.treeSends[0].sender, host.employee, 'a root cannot address itself');
+    assert.equal(host.treeSends[0].targetId, host.lead.id, 'the root is a Session id, not a name');
+    assert.equal(host.sends.length, 0);
+    assert.ok(host.treeSends[0].options.signal instanceof AbortSignal, 'the tree send is cancellable');
+    assert.match(host.treeSends[0].content[0].text, /招聘申请：笔笔（writer）/);
+    assert.match(host.treeSends[0].content[0].text, /申请人：frontend/);
+  } finally {
+    host.dispose();
+  }
+});
+
+test('request_hire reports the same delivered value as the board it filed on', async () => {
+  const host = makeHost({ employee: { name: 'frontend' } });
+  try {
+    apply(host.ctx, {});
+    const result = await host.employeeTools.get('request_hire').execute(
+      { role: 'writer', reason: '需要一个文案' },
+      { agent: host.employee, signal: new AbortController().signal },
+    );
+    assert.equal(result.delivered, 'task');
+    assert.equal(result.taskId, 'task-1');
+    assert.match(result.subject, /招聘申请：笔笔（writer）/);
+    assert.equal(host.tasks.length, 1);
+    assert.match(host.tasks[0].request.description, /理由：需要一个文案/);
+  } finally {
+    host.dispose();
+  }
+});
+
+test('only the exact gate sentence is read as a closed board', async () => {
+  // The gate's refusal and a UI hint can both start with "enable Agent Teams for
+  // this Session"; a fragment match would file a real read failure as a user
+  // choice and silently report an empty board.
+  const host = makeHost({
+    listTasksError: new Error('enable Agent Teams for this Session before using the board editor'),
+  });
+  try {
+    apply(host.ctx, {});
+    await host.emitCreated({ agent: host.lead, source: 'created' });
+    const status = await host.tools.get('team_status').execute({}, { agent: host.lead });
+
+    assert.equal(status.taskBoard, 'unavailable');
+    assert.ok(
+      host.warnings.some((line) => /could not read the shared task board/.test(line)),
+      `expected a read failure to be reported, got ${JSON.stringify(host.warnings)}`,
+    );
   } finally {
     host.dispose();
   }

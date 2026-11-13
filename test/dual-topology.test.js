@@ -17,7 +17,9 @@ import assert from 'node:assert/strict';
 
 import { apply } from '../index.js';
 import {
+  boardSupported,
   deliverMessage,
+  ensureTeamBoard,
   listTeammates,
   listTeammatesSync,
   membershipOf,
@@ -261,18 +263,97 @@ function makeTreeHost(options = {}) {
     },
     tools: scoped.tools,
   };
+  /**
+   * The shared task board, in memory.
+   *
+   * The board is the same service on both topologies, so the tree fixture carries
+   * the same compare-and-set contract `host.test.js` implements: create is
+   * unowned and pending at revision 1, every mutation checks `expectedRevision`,
+   * and `complete` only accepts an in-progress task. That is what lets the review
+   * task and the acceptance gate be exercised here instead of only on 0.2.1.
+   */
+  const rows = new Map();
+  const boardUpdates = [];
+  let taskNumber = 0;
+  /** @param {object} row - stored row. @returns {object} detached view. */
+  const boardView = (row) => ({
+    ...row,
+    blockedBy: [...row.blockedBy],
+    writeScopes: [...row.writeScopes],
+    ready: row.status === 'pending',
+    writeScopeWarnings: [],
+  });
+  /** @param {string} code - Team error code. @param {string} message - text. */
+  const boardFail = (code, message) => Object.assign(new Error(message), { code });
+  const board = {
+    listTasks() {
+      return [...rows.values()].filter((row) => row.status !== 'deleted').map(boardView);
+    },
+    getTask(_caller, id) {
+      const row = rows.get(id);
+      if (row === undefined) throw boardFail('TEAM_TASK_NOT_FOUND', `team task "${id}" not found`);
+      return boardView(row);
+    },
+    async createTask(_caller, request) {
+      taskNumber += 1;
+      const row = {
+        id: `task-${taskNumber}`,
+        revision: 1,
+        subject: request.subject,
+        description: request.description,
+        status: 'pending',
+        blockedBy: [...(request.blockedBy ?? [])],
+        writeScopes: [...(request.writeScopes ?? [])],
+      };
+      rows.set(row.id, row);
+      return boardView(row);
+    },
+    async updateTask(caller, request) {
+      boardUpdates.push({ caller, request });
+      const row = rows.get(request.taskId);
+      if (row === undefined) {
+        throw boardFail('TEAM_TASK_NOT_FOUND', `team task "${request.taskId}" not found`);
+      }
+      if (row.revision !== request.expectedRevision) {
+        throw boardFail('TEAM_TASK_STALE_REVISION', `stale team task "${row.id}"`);
+      }
+      if (request.action === 'complete') {
+        if (row.status !== 'in_progress') {
+          throw boardFail('TEAM_TASK_INVALID_TRANSITION', 'only an in-progress task can complete');
+        }
+        row.status = 'completed';
+      } else if (request.action === 'edit') {
+        if (request.description !== undefined) row.description = request.description;
+        if (request.subject !== undefined) row.subject = request.subject;
+      } else if (request.action === 'set_dependencies') {
+        row.blockedBy = [...(request.blockedBy ?? [])];
+      } else if (request.action === 'reassign') {
+        if (caller !== lead) throw boardFail('TEAM_LEAD_REQUIRED', 'only the Team Lead can reassign tasks');
+        const member = descendants.find((entry) => entry.id === request.owner);
+        if (member === undefined) {
+          throw boardFail('TEAM_MEMBER_NOT_FOUND', `agent "${request.owner}" is not a continuable descendant`);
+        }
+        row.status = 'in_progress';
+        row.ownerId = member.id;
+        row.ownerName = member.path ?? member.id;
+      } else {
+        throw boardFail('TEAM_INVALID_ARGUMENT', `unsupported task action ${String(request.action)}`);
+      }
+      row.revision += 1;
+      return boardView(row);
+    },
+  };
   const ctx = {
     logger: { warn() {}, info() {} },
     agents: {
       list: () => [lead, ...children],
       get: (id) => (id === lead.id ? lead : children.find((child) => child.id === id)),
     },
-    agentTeams: {
-      listTasks: () => [],
-      async createTask() {
-        throw new Error('unused');
-      },
-    },
+    // The task board is the same service on both topologies, so this fixture
+    // implements the same compare-and-set contract host.test.js does — enough
+    // for the review task, the acceptance gate, and the budget probe to run on
+    // the tree topology too.
+    agentTeams: board,
     sessionProjections: { stateOf: () => undefined },
     sessionController: { agents: { selectForNextRequest() {} } },
     get(name) {
@@ -323,6 +404,9 @@ function makeTreeHost(options = {}) {
     children,
     registered,
     activations,
+    /** Durable board rows and every update attempt, for the gate tests. */
+    boardRows: rows,
+    boardUpdates,
     sections: scoped.sections,
     /** First denial the Lead's tool call would hit, as the tools service resolves it. */
     guardReason(toolName) {
@@ -450,4 +534,185 @@ test('a user fork of a teammate is never mistaken for a teammate', () => {
     }),
   };
   assert.equal(membershipOf(genuine, child)?.name, 'backend');
+});
+
+/*
+ * The Session-level Team switch: 0.2.2 only.
+ *
+ * 0.2.1's board has no gate, so `ensureTeamBoard` must do nothing at all there.
+ * On 0.2.2 the switch belongs to the tree root, and a saved `false` is the user's
+ * own answer — the plugin opens a board that was never chosen, never one that was
+ * chosen off.
+ */
+
+test('the board switch is probed as a pair, not by one method name', () => {
+  // Only 0.2.2 has both: a kernel with `isEnabled` alone could report that the
+  // board is closed and then have no way to open it.
+  assert.equal(boardSupported({ agentTeams: { isEnabled: () => false } }), false);
+  assert.equal(boardSupported({ agentTeams: { setEnabled: async () => {} } }), false);
+  assert.equal(
+    boardSupported({ agentTeams: { isEnabled: () => false, setEnabled: async () => {} } }),
+    true,
+  );
+});
+
+test('a 0.2.1 board has no switch, so nothing is opened and nothing is sent', async () => {
+  const lead = { id: 'sess-lead' };
+  const calls = { tasks: 0, sends: 0 };
+  const ctx = {
+    agentTeams: {
+      tryMembership: () => ({ role: 'lead', name: 'lead', root: lead }),
+      listMembers: () => [],
+      listTasks() {
+        calls.tasks += 1;
+        return [];
+      },
+      async sendMessage() {
+        calls.sends += 1;
+        return { messageId: 'msg' };
+      },
+    },
+  };
+
+  assert.equal(boardSupported(ctx), false);
+  assert.deepEqual(await ensureTeamBoard(ctx, lead), { state: 'unsupported' });
+  assert.deepEqual(calls, { tasks: 0, sends: 0 }, 'no switch means no board call, write, or message');
+});
+
+test('the tree root owns the switch: one write, then idempotent, and a saved off is kept', async () => {
+  const lead = { id: 'sess-lead', session: { id: 'sess-lead', header: { id: 'sess-lead' } } };
+  const teammate = { ...agentFixture('sess-backend', 'sess-lead'), treeRoot: lead, treeName: 'backend' };
+  const writes = [];
+  let enabled = false;
+  const ctx = {
+    get: (name) => (name === 'subagents' ? treeSubagents([]) : undefined),
+    agentTeams: {
+      isEnabled(caller) {
+        return caller === lead && enabled;
+      },
+      async setEnabled(caller, value) {
+        // The kernel's own rule: only the root may move the switch. Encoding it
+        // here turns "the write must come from the root" from an assertion about
+        // an argument into behaviour the bridge has to survive.
+        if (caller !== lead) {
+          throw Object.assign(new Error('change Team mode from the root Session'), {
+            code: 'TEAM_LEAD_REQUIRED',
+          });
+        }
+        writes.push({ caller, value });
+        enabled = value;
+      },
+    },
+    sessionProjections: { stateOf: () => undefined },
+  };
+
+  // A member may ask; the write goes to the root, which is what `setEnabled`
+  // requires (it refuses a descendant with TEAM_LEAD_REQUIRED).
+  assert.deepEqual(await ensureTeamBoard(ctx, teammate), { state: 'on' });
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].caller, lead);
+  assert.equal(writes[0].value, true);
+  await assert.rejects(() => ctx.agentTeams.setEnabled(teammate, true), /root Session/);
+
+  assert.deepEqual(await ensureTeamBoard(ctx, teammate), { state: 'on' });
+  assert.equal(writes.length, 1, 'an open board is never reopened');
+
+  // The user closed it in the Team panel: `enabled: false` is a decision.
+  enabled = false;
+  const savedOff = {
+    ...ctx,
+    sessionProjections: { stateOf: () => ({ enabled: false }) },
+  };
+  assert.deepEqual(await ensureTeamBoard(savedOff, teammate), {
+    state: 'off',
+    reason: 'Agent Teams is switched off for this Session',
+  });
+  assert.equal(writes.length, 1, 'a saved off is reported, never overwritten');
+});
+
+test('a switch that cannot be written is unavailable, not a thrown turn', async () => {
+  const lead = { id: 'sess-lead', session: { id: 'sess-lead', header: { id: 'sess-lead' } } };
+  const ctx = {
+    get: (name) => (name === 'subagents' ? treeSubagents([]) : undefined),
+    agentTeams: {
+      isEnabled: () => false,
+      async setEnabled() {
+        throw new Error('persistence unavailable');
+      },
+    },
+    sessionProjections: { stateOf: () => undefined },
+  };
+  assert.deepEqual(await ensureTeamBoard(ctx, lead), {
+    state: 'unavailable',
+    reason: 'persistence unavailable',
+  });
+});
+
+test('a message to `lead` addresses the root Session, from the member that sends it', async () => {
+  const lead = { id: 'sess-lead', session: { id: 'sess-lead', header: { id: 'sess-lead' } } };
+  const employee = { ...agentFixture('sess-frontend', 'sess-lead'), treeRoot: lead, treeName: 'frontend' };
+  const recorder = { sends: [], descendants: [] };
+  const ctx = {
+    get: (name) => (name === 'subagents' ? treeSubagents([], recorder) : undefined),
+  };
+
+  // The root is nobody's descendant, so a name lookup would miss it; and the
+  // tree service refuses a self-addressed send, so the root cannot be the sender.
+  const receipt = await deliverMessage(ctx, employee, {
+    target: 'lead',
+    content: [{ type: 'text', text: '招聘申请：笔笔（writer）' }],
+  });
+
+  assert.equal(typeof receipt.messageId, 'string');
+  assert.equal(recorder.sends.length, 1, 'one delivery, through the tree service');
+  assert.equal(recorder.sends[0].sender, employee, 'the employee is the sender');
+  assert.equal(recorder.sends[0].targetId, lead.id, 'the root is addressed by Session id');
+  assert.ok(recorder.sends[0].options.signal instanceof AbortSignal, 'the send stays cancellable');
+  assert.match(recorder.sends[0].content[0].text, /招聘申请/);
+
+  // A root has no inbox of its own: that has to read as a sentence, not as a
+  // tree error leaking into the turn.
+  await assert.rejects(
+    () => deliverMessage(ctx, lead, { target: 'lead', content: [{ type: 'text', text: 'hi' }] }),
+    /Cannot deliver to the Lead from the Lead/,
+  );
+});
+
+test('an unplaceable sender reports a readable delivery error, not a SubagentError', async () => {
+  const lead = { id: 'sess-lead', session: { id: 'sess-lead', header: { id: 'sess-lead' } } };
+  const stranger = { id: 'sess-ghost', session: { id: 'sess-ghost' } };
+  const ctx = {
+    get: (name) =>
+      name === 'subagents'
+        ? {
+            startActivation: () => {
+              throw new Error('unused');
+            },
+            namesOf: () => ({ self: 'ghost' }),
+            // What the kernel does for an Agent it cannot place in a live tree.
+            rootOf() {
+              throw Object.assign(new Error('agent "sess-ghost" is not a member of this subagent tree'), {
+                code: 'UNAUTHORIZED',
+                name: 'SubagentError',
+              });
+            },
+            async listDescendants() {
+              return [];
+            },
+            async sendMessage() {
+              throw new Error('unused');
+            },
+          }
+        : undefined,
+  };
+
+  await assert.rejects(
+    () => deliverMessage(ctx, stranger, { target: 'lead', content: [{ type: 'text', text: 'hi' }] }),
+    (error) => {
+      assert.match(error.message, /^Cannot deliver to the Lead: /);
+      assert.match(error.message, /not a member of this subagent tree/);
+      assert.notEqual(error.name, 'SubagentError');
+      return true;
+    },
+  );
 });

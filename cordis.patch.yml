@@ -9,6 +9,12 @@
         maxWorkersPerEmployee: 2
         trimEmployeeTools: true
         employeeStepBudget: 24
+        teamTokenBudget: 0
+        tokenBudgetOnExceed: warn
+        benchRoles: ''
+        presetReviewer: ''
+        presetResearcher: ''
+        presetOps: ''
         autoStart: 'off'
         dispatchPrefix: true
         leadHandsOff: false

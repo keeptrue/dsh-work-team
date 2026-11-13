@@ -1,10 +1,10 @@
 {
   "name": "@local/dsh-work-team",
-  "version": "2.2.0",
+  "version": "2.5.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test test/",
+    "test": "node scripts/run-tests.mjs",
     "measure": "node scripts/measure-context.mjs",
     "link:host-deps": "node scripts/link-host-deps.mjs"
   },
