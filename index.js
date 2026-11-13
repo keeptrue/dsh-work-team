@@ -45,6 +45,14 @@ import {
   resolveDispatchRole,
 } from './lib/dispatch.js';
 import { OWN_LAYER_TOOLS, employeeAllowList } from './lib/toolset.js';
+import {
+  deliverMessage,
+  listTeammates,
+  listTeammatesSync,
+  membershipOf,
+  spawnMember,
+  usesSubagentTopology,
+} from './lib/team-bridge.js';
 
 /** Cordis plugin name. */
 export const name = 'work-team';
@@ -230,8 +238,8 @@ function rememberDispatch(state, id) {
  * @param {import('@deepseek-ai/dsh-agent').Agent} lead - Team Lead.
  * @returns {object[]} teammate rows, excluding the implicit Lead row.
  */
-function teammatesOf(ctx, lead) {
-  return ctx.agentTeams.listMembers(lead).filter((member) => member.role === 'teammate');
+async function teammatesOf(ctx, lead, signal) {
+  return listTeammates(ctx, lead, signal);
 }
 
 /**
@@ -529,14 +537,14 @@ function applyRoleModel(ctx, state, lead, agent, role) {
 async function syncModelsForLead(ctx, state, lead) {
   let membership;
   try {
-    membership = ctx.agentTeams.tryMembership(lead);
+    membership = membershipOf(ctx, lead);
   } catch {
     return;
   }
   if (membership?.role !== 'lead') return;
   let members;
   try {
-    members = teammatesOf(ctx, lead);
+    members = await teammatesOf(ctx, lead);
   } catch (error) {
     warn(ctx, `could not list teammates for ${lead.id}: ${messageOf(error)}`);
     return;
@@ -570,7 +578,11 @@ function scheduleModelSync(ctx, state, lead) {
 /** @param {import('@deepseek-ai/dsh-agent').Agent} agent - Agent. @param {string} name - order key. @param {number} fallback - fallback. */
 function sectionOrder(agent, name, fallback) {
   try {
-    const value = agent.ctx.systemPrompt.getSectionOrder(name);
+    const prompt = agent.ctx.systemPrompt;
+    // Present in both 0.2.1 and 0.2.2; the guard keeps a future drop from
+    // turning a prompt-order miss into an install failure.
+    if (typeof prompt?.getSectionOrder !== 'function') return fallback;
+    const value = prompt.getSectionOrder(name);
     return Number.isFinite(value) ? value : fallback;
   } catch {
     return fallback;
@@ -579,7 +591,7 @@ function sectionOrder(agent, name, fallback) {
 
 /** @param {object} ctx - Host context. @param {unknown} agent - candidate Agent. @returns {import('@deepseek-ai/dsh-agent').Agent} the Lead. */
 function requireLead(ctx, agent) {
-  const membership = agent === undefined ? undefined : ctx.agentTeams.tryMembership(agent);
+  const membership = agent === undefined ? undefined : membershipOf(ctx, agent);
   if (membership?.role !== 'lead') {
     throw new Error('This tool belongs to the Work Team Lead (the main conversation).');
   }
@@ -588,7 +600,7 @@ function requireLead(ctx, agent) {
 
 /** @param {object} ctx - Host context. @param {unknown} agent - candidate Agent. @returns {{ root: object, name: string }} teammate identity. */
 function requireTeammate(ctx, agent) {
-  const membership = agent === undefined ? undefined : ctx.agentTeams.tryMembership(agent);
+  const membership = agent === undefined ? undefined : membershipOf(ctx, agent);
   if (membership?.role !== 'teammate') {
     throw new Error('This tool belongs to a Work Team employee.');
   }
@@ -639,7 +651,7 @@ function renderJson(_args, value) {
  * @returns {Promise<{ member: object, created: boolean }>} roster row.
  */
 async function spawnRole(ctx, state, lead, role, task, signal) {
-  const members = teammatesOf(ctx, lead);
+  const members = await teammatesOf(ctx, lead, signal);
   const existing = members.find((member) => member.name === role.id);
   if (existing !== undefined) {
     if (existing.status === 'failed') {
@@ -648,7 +660,7 @@ async function spawnRole(ctx, state, lead, role, task, signal) {
       );
     }
     if (task !== undefined && task.trim() !== '') {
-      await ctx.agentTeams.sendMessage(lead, {
+      await deliverMessage(ctx, lead, {
         target: role.id,
         content: [{ type: 'text', text: task }],
         signal,
@@ -661,12 +673,10 @@ async function spawnRole(ctx, state, lead, role, task, signal) {
   const firstPrompt = trimmedTask === ''
     ? onboardingText(role)
     : `你是「${role.zh.name}」（团队名 ${role.id}），${role.zh.role}，lead 的员工。你的第一个任务：\n\n${trimmedTask}`;
-  const result = await ctx.agentTeams.spawnTeammate(lead, {
+  const result = await spawnMember(ctx, lead, {
     name: role.id,
     description: role.zh.description,
     prompt: [{ type: 'text', text: firstPrompt }],
-    context: 'fresh',
-    provider: 'spawn',
     signal,
   });
 
@@ -714,12 +724,12 @@ async function runAutoStart(ctx, state, lead, controller) {
   const inFlight = new Set();
 
   /** Claim the next untried, unfilled seat, or undefined to stop scheduling. */
-  const takeNextSeat = () => {
+  const takeNextSeat = async () => {
     if (state.disposed || signal.aborted) return undefined;
     if (state.config.autoStart === 'off') return undefined;
     let members;
     try {
-      members = teammatesOf(ctx, lead);
+      members = await teammatesOf(ctx, lead);
     } catch (error) {
       warn(ctx, `could not list teammates while forming the team: ${messageOf(error)}`);
       return undefined;
@@ -759,7 +769,7 @@ async function runAutoStart(ctx, state, lead, controller) {
     await Promise.all(
       Array.from({ length: FORMATION_CONCURRENCY }, async () => {
         for (;;) {
-          const id = takeNextSeat();
+          const id = await takeNextSeat();
           if (id === undefined) return;
           await hireSeat(id);
         }
@@ -815,7 +825,7 @@ function startAutoStart(ctx, state, lead) {
 function maybeAutoStart(ctx, state, agent, source) {
   let membership;
   try {
-    membership = ctx.agentTeams.tryMembership(agent);
+    membership = membershipOf(ctx, agent);
   } catch {
     return;
   }
@@ -873,7 +883,7 @@ async function applyDispatch(ctx, state, lead, messages, message, parsed, role, 
 
   let member;
   try {
-    member = teammatesOf(ctx, lead).find((row) => row.name === role.id);
+    member = (await teammatesOf(ctx, lead, signal)).find((row) => row.name === role.id);
   } catch (error) {
     warn(ctx, `could not read the roster for @${role.id}: ${messageOf(error)}`);
     return undefined;
@@ -891,7 +901,7 @@ async function applyDispatch(ctx, state, lead, messages, message, parsed, role, 
   }
 
   try {
-    await ctx.agentTeams.sendMessage(lead, {
+    await deliverMessage(ctx, lead, {
       target: role.id,
       content: compose(parsed.body),
       signal,
@@ -925,7 +935,7 @@ async function leadPreStepDecision(ctx, state, payload) {
   const agent = payload?.agent;
   let membership;
   try {
-    membership = agent === undefined ? undefined : ctx.agentTeams.tryMembership(agent);
+    membership = agent === undefined ? undefined : membershipOf(ctx, agent);
   } catch {
     membership = undefined;
   }
@@ -1008,7 +1018,7 @@ function makeTeamStartTool(ctx, state) {
     async execute(_args, exec) {
       const lead = requireLead(ctx, exec.agent);
       const capacity = clampTeamSize(state.config.teamSize, DEFAULT_LINEUP.length, MAX_TEAM_SIZE);
-      const members = teammatesOf(ctx, lead);
+      const members = await teammatesOf(ctx, lead, exec.signal);
       const forming = state.autoStart.get(lead.id);
       if (autoStartIsActive(forming)) {
         return {
@@ -1145,7 +1155,7 @@ function makeHireTool(ctx, state, options = {}) {
       if (role === undefined) throw new Error(`Unknown Work Team role "${String(args.role)}".`);
       const lead = employee ? requireTeammate(ctx, exec.agent).root : requireLead(ctx, exec.agent);
       const capacity = clampTeamSize(state.config.teamSize, DEFAULT_LINEUP.length, MAX_TEAM_SIZE);
-      const members = teammatesOf(ctx, lead);
+      const members = await teammatesOf(ctx, lead);
       const existing = members.find((member) => member.name === role.id);
       const desired = desiredSelection(ctx, lead, role, state.config);
       const model = formatModelSpec(desired) === '' ? 'follow-main' : formatModelSpec(desired);
@@ -1245,7 +1255,7 @@ function makeDispatchTasksTool(ctx, state) {
             return { role: role.id, accepted: false, messageId: '', error: 'Task text is empty.' };
           }
           try {
-            const receipt = await ctx.agentTeams.sendMessage(lead, {
+            const receipt = await deliverMessage(ctx, lead, {
               target: role.id,
               content: [{ type: 'text', text: task }],
               signal: exec.signal,
@@ -1308,7 +1318,7 @@ function makeTeamStatusTool(ctx, state) {
     },
     async execute(_args, exec) {
       const lead = requireLead(ctx, exec.agent);
-      const members = teammatesOf(ctx, lead);
+      const members = await teammatesOf(ctx, lead);
       const tasks = ctx.agentTeams.listTasks(lead);
       const rows = members.map((member) => {
         const role = roleForName(member.name);
@@ -1394,7 +1404,7 @@ function makeRequestHireTool(ctx) {
       const membership = requireTeammate(ctx, exec.agent);
       const role = roleById(args.role);
       if (role === undefined) throw new Error(`Unknown Work Team role "${String(args.role)}".`);
-      const existing = teammatesOf(ctx, membership.root).find((member) => member.name === role.id);
+      const existing = (await teammatesOf(ctx, membership.root)).find((member) => member.name === role.id);
       if (existing !== undefined) {
         throw new Error(`Role "${role.id}" is already on the team.`);
       }
@@ -1433,9 +1443,12 @@ function installBoss(ctx, state, agent) {
     disposers.push(
       agent.ctx.tools.guard((exec) => {
         if (exec.name !== 'spawn_teammate') return undefined;
+        // The subagent topology has no `spawn_teammate` tool at all, and its
+        // roster is asynchronous; this guard therefore only guards the old plane.
+        if (usesSubagentTopology(ctx)) return undefined;
         let count;
         try {
-          count = teammatesOf(ctx, agent).length;
+          count = listTeammatesSync(ctx, agent).length;
         } catch {
           return undefined;
         }
@@ -1718,7 +1731,7 @@ function maybeInstall(ctx, state, agent, source) {
   }
   let membership;
   try {
-    membership = ctx.agentTeams.tryMembership(agent);
+    membership = membershipOf(ctx, agent);
   } catch {
     return;
   }
@@ -1841,7 +1854,7 @@ export function apply(ctx, config) {
     if (agent === undefined) return;
     let membership;
     try {
-      membership = ctx.agentTeams.tryMembership(agent);
+      membership = membershipOf(ctx, agent);
     } catch {
       return;
     }
