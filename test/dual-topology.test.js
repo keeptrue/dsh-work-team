@@ -217,7 +217,7 @@ test('the sync roster guard refuses the tree topology instead of returning a pro
 
 /**
  * A Host fixture carrying the tree topology and nothing else optional.
- * @param {{ teamSize?: number }} [options] - config overrides.
+ * @param {{ teamSize?: number, children?: number }} [options] - config overrides.
  */
 function makeTreeHost(options = {}) {
   const listeners = new Map();
@@ -227,12 +227,14 @@ function makeTreeHost(options = {}) {
   const lead = { id: 'sess-lead', session: { id: 'sess-lead', header: { id: 'sess-lead' } }, status: 'inactive' };
   const scoped = {
     sections: [],
+    guards: [],
     tools: {
       register(definition) {
         registered.set(definition.name, definition);
         return () => registered.delete(definition.name);
       },
-      guard() {
+      guard(predicate) {
+        scoped.guards.push(predicate);
         return () => {};
       },
       restrict() {
@@ -240,6 +242,15 @@ function makeTreeHost(options = {}) {
       },
     },
   };
+  /** Live direct children of the Lead: one-shot workers and teammates alike. */
+  const children = Array.from({ length: options.children ?? 0 }, (_, index) => ({
+    id: `sess-child-${index + 1}`,
+    status: 'inactive',
+    session: {
+      id: `sess-child-${index + 1}`,
+      header: { id: `sess-child-${index + 1}`, parentSession: lead.id, origin: 'subagent' },
+    },
+  }));
   lead.ctx = {
     systemPrompt: {
       section(section) {
@@ -252,7 +263,10 @@ function makeTreeHost(options = {}) {
   };
   const ctx = {
     logger: { warn() {}, info() {} },
-    agents: { list: () => [lead], get: (id) => (id === lead.id ? lead : undefined) },
+    agents: {
+      list: () => [lead, ...children],
+      get: (id) => (id === lead.id ? lead : children.find((child) => child.id === id)),
+    },
     agentTeams: {
       listTasks: () => [],
       async createTask() {
@@ -306,9 +320,18 @@ function makeTreeHost(options = {}) {
   return {
     ctx,
     lead,
+    children,
     registered,
     activations,
     sections: scoped.sections,
+    /** First denial the Lead's tool call would hit, as the tools service resolves it. */
+    guardReason(toolName) {
+      for (const guard of scoped.guards) {
+        const reason = guard({ name: toolName, agent: lead });
+        if (reason !== undefined) return reason;
+      }
+      return undefined;
+    },
     emit,
     config: {
       autoStart: 'off',
@@ -345,4 +368,86 @@ test('on the tree topology the plugin still installs the Lead scope and hires na
     assert.equal(typeof spec.name, 'string');
     assert.deepEqual(spec.prompt[0].type, 'text');
   }
+});
+
+test('the tree topology refuses to expand past teamSize', async () => {
+  // One seat already taken, capacity one: the Lead may not open another child.
+  const host = makeTreeHost({ teamSize: 1, children: 1 });
+  apply(host.ctx, host.config);
+  await host.emit('agent/created', { agent: host.lead, source: 'created' });
+
+  const denied = host.guardReason('subagent');
+  assert.match(String(denied), /at capacity \(1\/1\)/, 'subagent is capped by teamSize');
+  assert.match(String(host.guardReason('subagent_fork')), /at capacity \(1\/1\)/);
+
+  // The 0.2.1 tool name is not the expansion path here, so it must not fire.
+  assert.equal(host.guardReason('spawn_teammate'), undefined);
+  // An unrelated tool is never touched.
+  assert.equal(host.guardReason('read'), undefined);
+});
+
+test('the tree topology still allows expansion while a seat is free', async () => {
+  const host = makeTreeHost({ teamSize: 3, children: 2 });
+  apply(host.ctx, host.config);
+  await host.emit('agent/created', { agent: host.lead, source: 'created' });
+
+  assert.equal(host.guardReason('subagent'), undefined, '2/3 seats leaves room');
+});
+
+test('a user fork of a teammate is never mistaken for a teammate', () => {
+  const lead = { id: 'sess-lead', session: { id: 'sess-lead', header: { id: 'sess-lead' } } };
+  const fork = {
+    id: 'sess-backend-fork',
+    session: { id: 'sess-backend-fork', header: { id: 'sess-backend-fork', parentSession: 'sess-backend' } },
+  };
+
+  // The dangerous resolution: the fork lands on the ORIGINAL root, and the name
+  // it reports is the root's own `lead`.
+  const ontoRoot = {
+    get: () => ({
+      rootOf: () => lead,
+      namesOf: () => ({ self: 'lead' }),
+      async listDescendants() {
+        return [];
+      },
+      async startActivation() {
+        throw new Error('unused');
+      },
+    }),
+  };
+  assert.equal(membershipOf(ontoRoot, fork), undefined, 'a root-named row is not a teammate');
+
+  // A fork whose parent is not the root is rejected even with a plausible name.
+  const foreignParent = {
+    get: () => ({
+      rootOf: () => lead,
+      namesOf: () => ({ self: 'backend/checker' }),
+      async listDescendants() {
+        return [];
+      },
+      async startActivation() {
+        throw new Error('unused');
+      },
+    }),
+  };
+  assert.equal(membershipOf(foreignParent, fork), undefined, 'only direct children of the root are seats');
+
+  // A genuine direct child still resolves, so the guard did not over-reject.
+  const child = {
+    id: 'sess-backend',
+    session: { id: 'sess-backend', header: { id: 'sess-backend', parentSession: 'sess-lead', origin: 'subagent' } },
+  };
+  const genuine = {
+    get: () => ({
+      rootOf: () => lead,
+      namesOf: () => ({ self: 'backend' }),
+      async listDescendants() {
+        return [];
+      },
+      async startActivation() {
+        throw new Error('unused');
+      },
+    }),
+  };
+  assert.equal(membershipOf(genuine, child)?.name, 'backend');
 });

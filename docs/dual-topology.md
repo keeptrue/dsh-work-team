@@ -81,6 +81,21 @@ work-team 自己注册的只有五个（`index.js:1424-1427`、`index.js:1661-16
 
 3. **别忘的边界**：`listTeammatesSync()` 只服务旧平面的同步 guard，树拓扑下会抛 `listTeammatesSync is only available on the Team-service topology`；这是有意的，防止有人在异步语境里误用。
 
+## 4.5 容量守卫与 `sendMessage` 的两处订正
+
+**守卫（`index.js` `installBoss`）**：0.2.2 删掉了 `spawn_teammate`，扩员工具换成 `subagent` / `subagent_fork`。原实现只认旧工具名，升级后 `teamSize` 等于失效。现在按拓扑取名单：
+
+| 拓扑 | 受守卫的扩员工具 | 计数来源 |
+|---|---|---|
+| Team 服务（0.2.1） | `spawn_teammate` | `listMembers()` 精确名册 |
+| subagent 树（0.2.2） | `subagent`、`subagent_fork` | `liveChildrenOf()`，即 `parentSession === lead.id && origin === 'subagent'` 的活子节点 |
+
+0.2.1 上**故意不**把 `subagent`/`subagent_fork` 纳入守卫：旧内核里领队开临时工本来不受 `teamSize` 约束，加进去等于改掉已发布行为。
+
+`tools.guard()` 在两版内核里都是同步契约（`const denial = guard(exec)`，不 await），所以树拓扑不能在这里 await `listDescendants`。改用活子节点计数：每个 teammate 都是一个活子节点，一次性 worker 结算即 dispose、自动让位，因此只在它真正跑着的时候占座。副作用见风险 8。
+
+**`deliverMessage` 的 `options.signal`**：`dsh-subagent` 的 `sendMessage` 开头就是 `options.signal.throwIfAborted()`（`lib/index.js:1693`），**`options.signal` 是必填**，缺了不是走默认而是抛 TypeError。原实现传 `{}` 的写法在"调用点没有取消信号"时会炸，现已改为 `signal ?? new AbortController().signal`。
+
 ## 5. 风险与未验证点
 
 1. **`spawn` 后端名是硬编码**。`SPAWN_PROVIDER = 'spawn'` 取自 `dsh-base` 的默认 `providerName`。若部署把 in-process spawn 的 `providerName` 改成别的，招人会以"未知后端"失败。旧代码同样硬编码 `provider: 'spawn'`，不是本次引入的，但树拓扑下失败信息会更早出现（`expectProvider` 立刻抛）。
@@ -89,4 +104,5 @@ work-team 自己注册的只有五个（`index.js:1424-1427`、`index.js:1661-16
 4. **`parentSession` 判据未在真机验证**。`membershipOf()` 靠 `agent.session.header.parentSession === undefined` 认定"这是用户会话树根"。0.2.1 上 `tryMembership` 的口径是 Team 包的显式成员表，两者在"用户从员工会话 fork"这一种情形上试图对齐但没有真机对拍。风险是 fork 出来的会话被误判为 lead（多一层 boss 工具），或反过来主会话被误判（这种情况下团队完全不装）。**这条最值得在 0.2.2 真机上第一件事验证。**
 5. **`agent/created` / `agent/pre-step` / `agent/disposed` 三个钩子**已核 0.2.2 内核仍在、payload 形状一致（`{ agent, messages, signal, step, modelSelection }`），但没跑过真机。
 6. **`client.js` 未改**：它不直接请求 `/api/*`，八个 `dsh.client.inject` 包在 0.2.2 全部存在，服务面（`api-session-controller` / `api-remotes` / `sessionProjections.stateOf`）本次没有改名。若真机上办公室面板显示异常，问题在数据来源（名册状态词表，见第 2 条）而不在这个文件。
-7. **未在 0.2.2 真机加载过**。所有 0.2.2 侧的核实都是读 `/tmp/dsh-preflight/pkg/node_modules/@deepseek-ai/` 的源码与类型声明，`npm test` 跑在 0.2.1 的真实宿主包（`schemastery` / `dsh-tools`）上。
+8. **树拓扑下守卫按"活子节点"计数，比旧口径略严**。旧 `listMembers()` 只数正式员工；树拓扑的同步面分不出 continuable 与 one-shot，所以领队开着的临时工也会占一个 `teamSize` 座（worker 结算后自动释放）。要精确只能把守卫改成异步，而 `tools.guard()` 不支持异步——这是权衡后的取舍，不是遗漏。
+9. **未在 0.2.2 真机加载过**。所有 0.2.2 侧的核实都是读 `/tmp/dsh-preflight/pkg/node_modules/@deepseek-ai/` 的源码与类型声明，`npm test` 跑在 0.2.1 的真实宿主包（`schemastery` / `dsh-tools`）上。

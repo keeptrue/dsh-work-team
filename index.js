@@ -48,8 +48,8 @@ import { OWN_LAYER_TOOLS, employeeAllowList } from './lib/toolset.js';
 import {
   deliverMessage,
   listTeammates,
-  listTeammatesSync,
   membershipOf,
+  seatCount,
   spawnMember,
   usesSubagentTopology,
 } from './lib/team-bridge.js';
@@ -1442,13 +1442,22 @@ function installBoss(ctx, state, agent) {
     );
     disposers.push(
       agent.ctx.tools.guard((exec) => {
-        if (exec.name !== 'spawn_teammate') return undefined;
-        // The subagent topology has no `spawn_teammate` tool at all, and its
-        // roster is asynchronous; this guard therefore only guards the old plane.
-        if (usesSubagentTopology(ctx)) return undefined;
+        // The expansion tool is named per topology: 0.2.1 has `spawn_teammate`,
+        // 0.2.2 removed it and grows the team with `subagent` / `subagent_fork`.
+        // Guarding only the old name left the cap toothless after the upgrade —
+        // `teamSize` is this plugin's own setting and must not depend on a tool
+        // name the kernel happened to rename.
+        //
+        // On 0.2.1 the two delegation tools are deliberately NOT captured: the
+        // Lead could always open temporary workers there regardless of team
+        // size, and this guard must not tighten a shipped behaviour.
+        const guarded = usesSubagentTopology(ctx)
+          ? new Set(['subagent', 'subagent_fork'])
+          : new Set(['spawn_teammate']);
+        if (!guarded.has(exec.name)) return undefined;
         let count;
         try {
-          count = listTeammatesSync(ctx, agent).length;
+          count = seatCount(ctx, agent, liveChildrenOf(ctx, agent));
         } catch {
           return undefined;
         }
